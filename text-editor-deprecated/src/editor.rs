@@ -3,7 +3,8 @@ use crossterm::event::{read, Event::{self, Key}, KeyCode, KeyEvent, KeyEventKind
 mod terminal;
 use terminal::{Terminal, Size, Position};
 use std::io::Error;
-
+mod document;
+use document::Document;
 
 
 const NAME: &str = env!("CARGO_PKG_NAME");
