@@ -21,6 +21,7 @@ pub struct Location {
 pub struct Editor {
     should_quit: bool,
     location: Location,
+    document: Document::open(),
 }
 
 impl Editor {
@@ -105,15 +106,23 @@ impl Editor {
 
     fn draw_rows() -> Result<(), Error> {
         let Size{height, ..} = Terminal::size()?;
-        for row in 0..height {
+        for terminal_row in 0..height {
             Terminal::clear_line()?;
-            if row == height / 3 {
+            if let Some(row) = self.document.row(terminal_row as usize) {
+                Self::draw_row(row)?;
+            } else if terminal_row == height / 3 {
                 Self::draw_welcome_message()?;
             } else {
                 Self::draw_empty_row()?;
             }
+            
             if row < height.saturating_sub(1) {
                 Terminal::print("\r\n")?;
+            }
+            if row == height / 3 {
+                Self::draw_welcome_message()?;
+            } else {
+                Self::draw_empty_row()?;
             }
         }
         Ok(())
@@ -136,6 +145,13 @@ impl Editor {
         Ok(())
     }
 
+    fn draw_row(row: &Row) -> Result<(), Error> {
+        let start = self.location.x;
+        let end = self.location.x + Terminal::size()?.width;
+        let row = row.render(start, end);
+        Terminal::print(&row)?;
+        Ok(())
+    }
     
 
 }
