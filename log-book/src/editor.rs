@@ -1,8 +1,8 @@
 use core::cmp::min;
-use crossterm::event::{read, Event::{self, Key}, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 mod terminal;
 use terminal::{Terminal, Size, Position};
-use std::io::Error;
+use std::{env, io::Error};
 mod view;
 use view::View;
 
@@ -21,14 +21,23 @@ pub struct Location {
 pub struct Editor {
     should_quit: bool,
     location: Location,
+    view: View,
 }
 
 impl Editor {
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
+        self.handle_args();
         let result = self.repl();
         Terminal::terminate().unwrap();
         result.unwrap();
+    }
+
+    fn handle_args(&mut self) {
+        let args: Vec<String> = env::args().skip(1).collect();
+        if let Some(file_name) = args.get(1) {
+            self.view.load(file_name);
+        }
     }
 
     fn repl(&mut self) -> Result<(), Error> {
@@ -38,7 +47,7 @@ impl Editor {
                 break;
             }
             let event = read()?;
-            self.evaluate_event(&event)?;
+            self.evaluate_event(event)?;
         }
         Ok(())
     }
@@ -59,19 +68,21 @@ impl Editor {
         Ok(())
     }
 
-    fn evaluate_event(&mut self, event: &Event) -> Result<(), Error> {
-        if let Key(KeyEvent {
+    #[allow(clippy::needless_pass_by_value)] //Size is not an issue so passing by value is fine
+    fn evaluate_event(&mut self, event: Event) -> Result<(), Error> {
+        match event {
+            Event::Key(KeyEvent {
             code, 
             modifiers, 
             kind: KeyEventKind::Press, //Windows compatibility
             ..
-        }) = event {
-            match code {
+        }) => match (code, modifiers) {
                 //Quit
-                KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
+                (KeyCode::Char('q'), KeyModifiers::CONTROL) => {
                     self.should_quit = true;
                 },
                 //Move caret
+                (
                 KeyCode::Up
                 | KeyCode::Down
                 | KeyCode::Left
@@ -79,23 +90,31 @@ impl Editor {
                 | KeyCode::PageDown
                 | KeyCode::PageUp
                 | KeyCode::End
-                | KeyCode::Home => {
-                    self.move_point(*code)?;},
+                | KeyCode::Home,
+                _,
+                ) => {
+                    self.move_point(code)?;},
                 //Otherwise do nothing
-                _ => (),
-            }
+                _ => {},
+            },
+            Event::Resize(width_u16, height_u16 ) => {
+                let width = width_u16 as usize;
+                let height = height_u16 as usize;
+                self.view.resize(Size{width, height});
+            },
+            _ => {},
         }
         Ok(())
     }
 
-    fn refresh_screen(&self) -> Result<(), Error> {
+    fn refresh_screen(&mut self) -> Result<(), Error> {
         Terminal::hide_caret()?;
         Terminal::move_caret(Position::default())?;
         if self.should_quit {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye.\r\n")?;
         } else {
-            View::render()?;
+            self.view.render()?;
             Terminal::move_caret(Position{col: self.location.x, row: self.location.y})?;
         }
         Terminal::show_caret()?;
