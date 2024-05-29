@@ -3,7 +3,6 @@ use crossterm::{queue, Command};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType};
 use std::io::{stdout, Error, Write};
-use core::fmt::Display;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Position {
@@ -66,7 +65,7 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn print(message: impl Display) -> Result<(), Error> {
+    pub fn print(message: &str) -> Result<(), Error> {
         Self::queue_command(Print(message))?;
         Ok(())
     }
