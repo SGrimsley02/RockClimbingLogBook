@@ -63,6 +63,8 @@ impl std::fmt::Display for Style {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum Grade {
     Yosemite(Yosemite), //5.7, 5.8, 5.9, etc
@@ -83,6 +85,8 @@ impl std::fmt::Display for Grade {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum Yosemite {
     One,
@@ -167,6 +171,191 @@ impl std::fmt::Display for Yosemite {
         }
     }
 }
+impl std::convert::From<Hueco> for Yosemite { //Note, since this is between bouldering and big wall, it's not a solid conversion
+    fn from(hueco: Hueco) -> Yosemite {
+        match hueco {
+            Hueco::VB => Yosemite::FiveFive,
+            Hueco::V0Minus => Yosemite::FiveEight,
+            Hueco::V0 => Yosemite::FiveNine,
+            Hueco::V0Plus => Yosemite::FiveTenA,
+            Hueco::V1Minus => Yosemite::FiveTenB,
+            Hueco::V1 => Yosemite::FiveTenC,
+            Hueco::V1Plus => Yosemite::FiveTenD,
+            Hueco::V2Minus => Yosemite::FiveElevenA,
+            Hueco::V2 => Yosemite::FiveElevenA,
+            Hueco::V2Plus => Yosemite::FiveElevenB,
+            Hueco::V3Minus => Yosemite::FiveElevenC,
+            Hueco::V3 => Yosemite::FiveElevenC,
+            Hueco::V3Plus => Yosemite::FiveElevenD,
+            Hueco::V4Minus => Yosemite::FiveTwelveA,
+            Hueco::V4 => Yosemite::FiveTwelveA,
+            Hueco::V4Plus => Yosemite::FiveTwelveB,
+            Hueco::V5Minus => Yosemite::FiveTwelveB,
+            Hueco::V5 => Yosemite::FiveTwelveB,
+            Hueco::V5Plus => Yosemite::FiveTwelveB,
+            Hueco::V6Minus => Yosemite::FiveTwelveC,
+            Hueco::V6 => Yosemite::FiveTwelveD,
+            Hueco::V6Plus => Yosemite::FiveTwelveD,
+            Hueco::V7Minus => Yosemite::FiveThirteenA,
+            Hueco::V7 => Yosemite::FiveThirteenA,
+            Hueco::V7Plus => Yosemite::FiveThirteenB,
+            Hueco::V8Minus => Yosemite::FiveThirteenB,
+            Hueco::V8 => Yosemite::FiveThirteenC,
+            Hueco::V8Plus => Yosemite::FiveThirteenC,
+            Hueco::V9Minus => Yosemite::FiveThirteenC,
+            Hueco::V9 => Yosemite::FiveThirteenD,
+            Hueco::V9Plus => Yosemite::FiveThirteenD,
+            Hueco::V10Minus => Yosemite::FiveFourteenA,
+            Hueco::V10 => Yosemite::FiveFourteenA,
+            _ => Yosemite::FiveNine, //default to 5.9
+        }
+    }
+}
+impl std::convert::From<French> for Yosemite { //Note, conversions are always rough between systems
+    fn from(french: French) -> Yosemite {
+        match french {
+            French::One => Yosemite::FiveTwo,
+            French::Two => Yosemite::FiveThree,
+            French::Three => Yosemite::FiveFour,
+            French::FourA => Yosemite::FiveFive,
+            French::FourB => Yosemite::FiveFive,
+            French::FourC => Yosemite::FiveFive,
+            French::FiveA => Yosemite::FiveSix,
+            French::FiveB => Yosemite::FiveSeven,
+            French::FiveC => Yosemite::FiveEight,
+            French::SixAMinus => Yosemite::FiveNine,
+            French::SixA => Yosemite::FiveTenA,
+            French::SixAPlus => Yosemite::FiveTenB,
+            French::SixBMinus => Yosemite::FiveTenC,
+            French::SixB => Yosemite::FiveTenC,
+            French::SixBPlus => Yosemite::FiveTenD,
+            French::SixCMinus => Yosemite::FiveElevenA,
+            French::SixC => Yosemite::FiveElevenA,
+            French::SixCPlus => Yosemite::FiveElevenB,
+            French::SevenAMinus => Yosemite::FiveElevenC,
+            French::SevenA => Yosemite::FiveElevenC,
+            French::SevenAPlus => Yosemite::FiveElevenD,
+            French::SevenBMinus => Yosemite::FiveTwelveA,
+            French::SevenB => Yosemite::FiveTwelveA,
+            French::SevenBPlus => Yosemite::FiveTwelveB,
+            French::SevenCMinus => Yosemite::FiveTwelveC,
+            French::SevenC => Yosemite::FiveTwelveC,
+            French::SevenCPlus => Yosemite::FiveTwelveD,
+            French::EightAMinus => Yosemite::FiveThirteenA,
+            French::EightA => Yosemite::FiveThirteenB,
+            French::EightAPlus => Yosemite::FiveThirteenC,
+            French::EightBMinus => Yosemite::FiveThirteenD,
+            French::EightB => Yosemite::FiveThirteenD,
+            French::EightBPlus => Yosemite::FiveFourteenA,
+            French::EightCMinus => Yosemite::FiveFourteenB,
+            French::EightC => Yosemite::FiveFourteenB,
+            French::EightCPlus => Yosemite::FiveFourteenC,
+            French::NineAMinus => Yosemite::FiveFourteenD,
+            French::NineA => Yosemite::FiveFourteenD,
+            French::NineAPlus => Yosemite::FiveFifteenA,
+            French::NineBMinus => Yosemite::FiveFifteenB,
+            French::NineB => Yosemite::FiveFifteenB,
+            French::NineBPlus => Yosemite::FiveFifteenC,
+            French::NineCMinus => Yosemite::FiveFifteenD,
+            French::NineC => Yosemite::FiveFifteenD,
+            French::NineCPlus => Yosemite::FiveFifteenD,
+            _ => Yosemite::FiveNine, //default to 5.9
+        }
+    }
+}
+impl std::convert::From<Uiaa> for Yosemite {
+    fn from(uiaa: Uiaa) -> Yosemite {
+        match uiaa {
+            Uiaa::I => Yosemite::FiveOne,
+            Uiaa::II => Yosemite::FiveTwo,
+            Uiaa::III => Yosemite::FiveThree,
+            Uiaa::IVMinus => Yosemite::FiveFour,
+            Uiaa::IV => Yosemite::FiveFour,
+            Uiaa::IVPlus => Yosemite::FiveFive,
+            Uiaa::VMinus => Yosemite::FiveSix,
+            Uiaa::V => Yosemite::FiveSeven,
+            Uiaa::VPlus => Yosemite::FiveEight,
+            Uiaa::VIMinus => Yosemite::FiveNine,
+            Uiaa::VI => Yosemite::FiveTenA,
+            Uiaa::VIPlus => Yosemite::FiveTenB,
+            Uiaa::VIIMinus => Yosemite::FiveTenC,
+            Uiaa::VII => Yosemite::FiveTenD,
+            Uiaa::VIIPlus => Yosemite::FiveElevenA,
+            Uiaa::VIIIMinus => Yosemite::FiveElevenC,
+            Uiaa::VIII => Yosemite::FiveElevenD,
+            Uiaa::VIIIPlus => Yosemite::FiveTwelveA,
+            Uiaa::IXMinus => Yosemite::FiveTwelveC,
+            Uiaa::IX => Yosemite::FiveTwelveD,
+            Uiaa::IXPlus => Yosemite::FiveThirteenB,
+            Uiaa::XMinus => Yosemite::FiveThirteenC,
+            Uiaa::X => Yosemite::FiveThirteenD,
+            Uiaa::XPlus => Yosemite::FiveFourteenA,
+            Uiaa::XIMinus => Yosemite::FiveFourteenB,
+            Uiaa::XI => Yosemite::FiveFourteenD,
+            Uiaa::XIPlus => Yosemite::FiveFifteenA,
+            Uiaa::XIIMinus => Yosemite::FiveFifteenB,
+            Uiaa::XII => Yosemite::FiveFifteenC,
+            Uiaa::XIIPlus => Yosemite::FiveFifteenD,
+            _ => Yosemite::FiveNine, //default to 5.9
+        }
+    }
+}
+impl std::convert::From<Font> for Yosemite { //Note, bouldering grades are not a direct conversion to big wall
+    fn from(font: Font) -> Yosemite {
+        match font {
+            Font::OneMinus => Yosemite::FiveFour,
+            Font::One => Yosemite::FiveFive,
+            Font::OnePlus => Yosemite::FiveSix,
+            Font::TwoMinus => Yosemite::FiveSix,
+            Font::Two => Yosemite::FiveSeven,
+            Font::TwoPlus => Yosemite::FiveEight,
+            Font::ThreeMinus => Yosemite::FiveEight,
+            Font::Three => Yosemite::FiveNine,
+            Font::ThreePlus => Yosemite::FiveTenA,
+            Font::FourMinus => Yosemite::FiveTenB,
+            Font::Four => Yosemite::FiveTenC,
+            Font::FourPlus => Yosemite::FiveTenD,
+            Font::FiveMinus => Yosemite::FiveElevenA,
+            Font::Five => Yosemite::FiveElevenA,
+            Font::FivePlus => Yosemite::FiveElevenB,
+            Font::SixAMinus => Yosemite::FiveElevenC,
+            Font::SixA => Yosemite::FiveElevenC,
+            Font::SixAPlus => Yosemite::FiveElevenD,
+            Font::SixBMinus => Yosemite::FiveTwelveA,
+            Font::SixB => Yosemite::FiveTwelveA,
+            Font::SixBPlus => Yosemite::FiveTwelveB,
+            Font::SixCMinus => Yosemite::FiveTwelveB,
+            Font::SixC => Yosemite::FiveTwelveB,
+            Font::SixCPlus => Yosemite::FiveTwelveB,
+            Font::SevenAMinus => Yosemite::FiveTwelveC,
+            Font::SevenA => Yosemite::FiveTwelveD,
+            Font::SevenAPlus => Yosemite::FiveTwelveD,
+            Font::SevenBMinus => Yosemite::FiveThirteenA,
+            Font::SevenB => Yosemite::FiveThirteenA,
+            Font::SevenBPlus => Yosemite::FiveThirteenB,
+            Font::SevenCMinus => Yosemite::FiveThirteenB,
+            Font::SevenC => Yosemite::FiveThirteenC,
+            Font::SevenCPlus => Yosemite::FiveThirteenC,
+            Font::EightAMinus => Yosemite::FiveThirteenC,
+            Font::EightA => Yosemite::FiveThirteenD,
+            Font::EightAPlus => Yosemite::FiveThirteenD,
+            Font::EightBMinus => Yosemite::FiveFourteenA,
+            Font::EightB => Yosemite::FiveFourteenA,
+            Font::EightBPlus => Yosemite::FiveFourteenB,
+            Font::EightCMinus => Yosemite::FiveFourteenB,
+            Font::EightC => Yosemite::FiveFourteenC,
+            Font::EightCPlus => Yosemite::FiveFourteenD,
+            Font::NineAMinus => Yosemite::FiveFifteenA,
+            Font::NineA => Yosemite::FiveFifteenB,
+            Font::NineAPlus => Yosemite::FiveFifteenC,
+            Font::NineBMinus => Yosemite::FiveFifteenD,
+            Font::NineB => Yosemite::FiveFifteenD,
+            Font::NineBPlus => Yosemite::FiveFifteenD,
+            _ => Yosemite::FiveNine, //default to 5.9
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 enum Font {
     OneMinus,
@@ -279,6 +468,8 @@ impl std::fmt::Display for Font {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum Hueco { //V Scale
     VB,
@@ -399,6 +590,8 @@ impl std::fmt::Display for Hueco {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum French { //5a, 6a+-, etc.
     One,
@@ -499,6 +692,8 @@ impl std::fmt::Display for French {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum Uiaa {
     I,
@@ -568,6 +763,8 @@ impl std::fmt::Display for Uiaa {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 enum SendType {
     Redpoint, //Send after previous attempts/tops, no rests, lead or boulder (free) only
@@ -593,6 +790,8 @@ impl std::fmt::Display for SendType {
         }
     }
 }
+
+
 #[derive(Debug, Copy, Clone)]
 struct Date {
     year: u16,
@@ -604,6 +803,7 @@ impl std::fmt::Display for Date {
         write!(f, "{}-{}-{}", self.month, self.day, self.year)
     }
 }
+
 
 fn main() {
     println!("Hello, world!");
@@ -631,6 +831,7 @@ fn main() {
     };
     println!("{}", send);
 
+    /*
     let mut routeName = String::new();
     println!("Enter a route name: ");
     io::stdin().read_line(&mut routeName).expect("Failed to read line");
@@ -675,6 +876,7 @@ fn main() {
         _ => Style::Trad,
     };
 
+    
     let mut length = String::new();
     println!("Enter the length of the route: ");
     io::stdin().read_line(&mut length).expect("Failed to read line");
@@ -700,4 +902,9 @@ fn main() {
     };
     println!("Here's your route: {}", route);
 
+     */
+
+    let vGrade = Hueco::V13;
+    let yGrade: Yosemite = vGrade.into();
+    println!("{} is Yosemite {}", vGrade, yGrade);
 }
