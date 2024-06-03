@@ -692,7 +692,51 @@ impl std::fmt::Display for French {
         }
     }
 }
+impl std::convert::From<Yosemite> for French {
+    fn from(yosemite: Yosemite) -> French {
+        match yosemite {
+            Yosemite::One => French::One,
+            Yosemite::Two => French::One,
+            Yosemite::Three => French::One,
+            Yosemite::Four => French::One,
+            Yosemite::FiveOne => French::One,
+            Yosemite::FiveTwo => French::One,
+            Yosemite::FiveThree => French::Two,
+            Yosemite::FiveFour => French::Three,
+            Yosemite::FiveFive => French::FourB,
+            Yosemite::FiveSix => French::FiveA,
+            Yosemite::FiveSeven => French::FiveB,
+            Yosemite::FiveEight => French::FiveC,
+            Yosemite::FiveNine => French::SixAMinus,
+            Yosemite::FiveTenA => French::SixA,
+            Yosemite::FiveTenB => French::SixAPlus,
+            Yosemite::FiveTenC => French::SixBMinus,
+            Yosemite::FiveTenD => French::SixBPlus,
+            Yosemite::FiveElevenA => French::SixCMinus,
+            Yosemite::FiveElevenB => French::SixCPlus,
+            Yosemite::FiveElevenC => French::SevenA,
+            Yosemite::FiveElevenD => French::SevenAPlus,
+            Yosemite::FiveTwelveA => French::SevenB,
+            Yosemite::FiveTwelveB => French::SevenBPlus,
+            Yosemite::FiveTwelveC => French::SevenCMinus,
+            Yosemite::FiveTwelveD => French::SevenCPlus,
+            Yosemite::FiveThirteenA => French::EightAMinus,
+            Yosemite::FiveThirteenB => French::EightA,
+            Yosemite::FiveThirteenC => French::EightAPlus,
+            Yosemite::FiveThirteenD => French::EightBMinus,
+            Yosemite::FiveFourteenA => French::EightBPlus,
+            Yosemite::FiveFourteenB => French::EightC,
+            Yosemite::FiveFourteenC => French::EightCPlus,
+            Yosemite::FiveFourteenD => French::NineAMinus,
+            Yosemite::FiveFifteenA => French::NineAPlus,
+            Yosemite::FiveFifteenB => French::NineB,
+            Yosemite::FiveFifteenC => French::NineBPlus,
+            Yosemite::FiveFifteenD => French::NineC,
+            _ => French::SixC,
+        }
+    }
 
+}
 
 #[derive(Debug, Copy, Clone)]
 enum Uiaa {
@@ -800,7 +844,7 @@ struct Date {
 }
 impl std::fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}-{}-{}", self.month, self.day, self.year)
+        write!(f, "{}/{}/{}", self.month, self.day, self.year)
     }
 }
 
