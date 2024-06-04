@@ -2,6 +2,21 @@
 use std::io;
 use std::fmt;
 
+use futures::executor::block_on;
+use sea_orm::{Database, DbErr};
+
+const DATABASE_URL: &str = "sqlite:./sqlite.db?mode=rwc";
+const DATABASE_NAME: &str = "routes_db";
+
+async fn run_db() -> Result<(), DbErr> {
+    let db = Database::connect(DATABASE_URL).await?;
+    
+    Ok(())
+}
+
+
+
+
 #[derive(Debug, Clone)]
 struct Route {
     name: String,
@@ -948,7 +963,11 @@ fn main() {
 
      */
 
-    let vGrade = Hueco::V13;
-    let yGrade: Yosemite = vGrade.into();
-    println!("{} is Yosemite {}", vGrade, yGrade);
+    let v_grade = Hueco::V13;
+    let y_grade: Yosemite = v_grade.into();
+    println!("{} is Yosemite {}", v_grade, y_grade);
+
+    if let Err(err) = block_on(run_db()) {
+        panic!("{}", err);
+    }
 }
