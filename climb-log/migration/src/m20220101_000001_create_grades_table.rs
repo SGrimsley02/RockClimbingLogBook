@@ -30,12 +30,13 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Grades::Hueco).string().not_null())
                     .col(ColumnDef::new(Grades::Font).string().not_null())
                     .col(ColumnDef::new(Grades::French).string().not_null())
-                    .col((ColumnDef::new(Grades::Uiaa).string().not_null()))
+                    .col(ColumnDef::new(Grades::Uiaa).string().not_null())
+                    .col(ColumnDef::new(Grades::RouteId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_grades_routes_id")
-                            .from(Routes::Table, Routes::Id)
-                            .to(Grades::Table, Grades::Id),
+                            .name("fk-grades-routes_id")
+                            .from(Grades::Table, Grades::RouteId)
+                            .to(Routes::Table, Routes::Id),
                     )
                     .to_owned(),
             )

@@ -1,16 +1,113 @@
-#[allow(dead_code, unused_variables)]
+#[allow(dead_code, unused_variables, unreachable_patterns)]
 use std::io;
 use std::fmt;
 
 use futures::executor::block_on;
-use sea_orm::{Database, DbErr};
+use sea_orm::*;
+mod entities;
+use entities::{prelude::*, *};
 
 const DATABASE_URL: &str = "sqlite:./sqlite.db?mode=rwc";
-const DATABASE_NAME: &str = "routes_db";
+const DB_NAME: &str = "routes_db";
+
+// NOTE!!!! Need to switch up the database, swap so routes has the foreign key to grades that way grades get reused
+
 
 async fn run_db() -> Result<(), DbErr> {
+    // Connect to the database
     let db = Database::connect(DATABASE_URL).await?;
+    let db = &match db.get_database_backend() {
+        DbBackend::MySql => {
+            db.execute(Statement::from_string(
+                db.get_database_backend(),
+                format!("CREATE DATABASE IF NOT EXISTS `{}`;", DB_NAME),
+            ))
+            .await?;
+        
+            let url = format!("{}/{}", DATABASE_URL, DB_NAME);
+            Database::connect(&url).await?
+        }
+        DbBackend::Postgres => {
+            db.execute(Statement::from_string(
+                db.get_database_backend(),
+                format!("DROP DATABASE IF EXISTS \"{}\";", DB_NAME),
+            ))
+            .await?;
+            db.execute(Statement::from_string(
+                db.get_database_backend(),
+                format!("CREATE DATABASE \"{}\";", DB_NAME),
+            ))
+            .await?;
+        
+            let url = format!("{}/{}", DATABASE_URL, DB_NAME);
+            Database::connect(&url).await?
+        }
+        DbBackend::Sqlite => db,
+    };
+
     
+    // Add a route to the database
+    let test_route = routes::ActiveModel {
+        name: ActiveValue::Set("Test Route 5".to_owned()),
+        style: ActiveValue::Set("Sport".to_owned()),
+        length: ActiveValue::Set(180.0),
+        pitches: ActiveValue::Set(3),
+        ..Default::default()
+    };
+    let res = Routes::insert(test_route).exec(db).await?;
+    
+
+    // Edit a route in the database
+    let edited_route = routes::ActiveModel {
+        id: ActiveValue::Set(res.last_insert_id as i32),
+        name: ActiveValue::Set("Test Route 6 Edited".to_owned()),
+        style: ActiveValue::NotSet,
+        length: ActiveValue::NotSet,
+        pitches: ActiveValue::NotSet,
+        ..Default::default()
+    };
+    edited_route.update(db).await?;
+
+    // Add a grade, connected to a route (see note)
+    let vSix = grades::ActiveModel {
+        yosemite: ActiveValue::Set("5.10a".to_owned()),
+        hueco: ActiveValue::Set("V2".to_owned()),
+        font: ActiveValue::Set("6A".to_owned()),
+        french: ActiveValue::Set("6A".to_owned()),
+        uiaa: ActiveValue::Set("VI".to_owned()),
+        route_id: ActiveValue::Set(res.last_insert_id as i32),
+        ..Default::default()
+    };
+    Grades::insert(vSix).exec(db).await?;
+
+    // Some basic ways to find routes
+    let routes: Vec<routes::Model> = Routes::find().all(db).await?;
+    
+    println!("Routes: {:#?}", routes);
+
+    let trial_route: Option<routes::Model> = Routes::find_by_id(1).one(db).await?;
+    assert_eq!(trial_route.is_some(), true);
+    assert_eq!(trial_route.unwrap().name, "Test Route 4 Edited");
+
+    let next_route: Option<routes::Model> = Routes::find()
+        .filter(routes::Column::Name.contains("Test Route 6"))
+        .one(db)
+        .await?;
+    assert_eq!(next_route.is_some(), true);
+
+    // Delete a route and its grade (basic)
+    let deleted_grade = grades::ActiveModel {
+        id: ActiveValue::Set(1),
+        ..Default::default()
+    };
+    let deleted_route = routes::ActiveModel {
+        id: ActiveValue::Set(1),
+        ..Default::default()
+    };
+    deleted_grade.delete(db).await?;
+    deleted_route.delete(db).await?;
+
+
     Ok(())
 }
 
@@ -969,5 +1066,7 @@ fn main() {
 
     if let Err(err) = block_on(run_db()) {
         panic!("{}", err);
+    } else {
+        println!("Success!");
     }
 }
