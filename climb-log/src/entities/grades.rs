@@ -12,18 +12,11 @@ pub struct Model {
     pub font: String,
     pub french: String,
     pub uiaa: String,
-    pub route_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::routes::Entity",
-        from = "Column::RouteId",
-        to = "super::routes::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
+    #[sea_orm(has_many = "super::routes::Entity")]
     Routes,
 }
 

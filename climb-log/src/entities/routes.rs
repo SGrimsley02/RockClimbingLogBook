@@ -2,21 +2,27 @@
 
 use sea_orm::entity::prelude::*;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "routes")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub name: String,
-    #[sea_orm(column_type = "Double")]
-    pub length: f64,
+    pub length: i32,
     pub pitches: i32,
     pub style: String,
+    pub grade_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::grades::Entity")]
+    #[sea_orm(
+        belongs_to = "super::grades::Entity",
+        from = "Column::GradeId",
+        to = "super::grades::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
     Grades,
 }
 

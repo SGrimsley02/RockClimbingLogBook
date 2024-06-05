@@ -1,5 +1,6 @@
 use sea_orm_migration::prelude::*;
 
+use super::m20220101_000001_create_grades_table::Grades;
 
 pub struct Migration;
 impl MigrationName for Migration {
@@ -27,9 +28,16 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Routes::Name).string().not_null())
-                    .col(ColumnDef::new(Routes::Length).double().not_null())
+                    .col(ColumnDef::new(Routes::Length).integer().not_null())
                     .col(ColumnDef::new(Routes::Pitches).integer().not_null())
                     .col(ColumnDef::new(Routes::Style).string().not_null())
+                    .col(ColumnDef::new(Routes::GradeId).integer().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-grades-routes_id")
+                            .from(Routes::Table, Routes::GradeId)
+                            .to(Grades::Table, Grades::Id),
+                    )
                     .to_owned(),
             )
             .await
@@ -50,4 +58,5 @@ pub enum Routes {
     Length,
     Pitches,
     Style,
+    GradeId,
 }

@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use super::m20220101_000001_create_routes_table::Routes;
+
 
 pub struct Migration;
 impl MigrationName for Migration {
@@ -31,13 +31,6 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Grades::Font).string().not_null())
                     .col(ColumnDef::new(Grades::French).string().not_null())
                     .col(ColumnDef::new(Grades::Uiaa).string().not_null())
-                    .col(ColumnDef::new(Grades::RouteId).integer().not_null())
-                    .foreign_key(
-                        ForeignKey::create()
-                            .name("fk-grades-routes_id")
-                            .from(Grades::Table, Grades::RouteId)
-                            .to(Routes::Table, Routes::Id),
-                    )
                     .to_owned(),
             )
             .await
@@ -45,13 +38,13 @@ impl MigrationTrait for Migration {
     // Define how to drop grades table
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Routes::Table).to_owned())
+            .drop_table(Table::drop().table(Grades::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Grades {
+pub enum Grades {
     Table,
     Id,
     Yosemite,
@@ -59,5 +52,4 @@ enum Grades {
     French,
     Hueco,
     Uiaa,
-    RouteId,
 }

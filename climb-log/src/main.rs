@@ -10,8 +10,61 @@ use entities::{prelude::*, *};
 const DATABASE_URL: &str = "sqlite:./sqlite.db?mode=rwc";
 const DB_NAME: &str = "routes_db";
 
-// NOTE!!!! Need to switch up the database, swap so routes has the foreign key to grades that way grades get reused
+async fn add_grade(db: &DatabaseConnection, yosemite: &str, font: &str, french: &str, hueco: &str, uiaa: &str) -> Result<(), DbErr> {
+    let new_grade = grades::ActiveModel {
+        yosemite: ActiveValue::Set(yosemite.to_owned()),
+        font: ActiveValue::Set(font.to_owned()),
+        french: ActiveValue::Set(french.to_owned()),
+        hueco: ActiveValue::Set(hueco.to_owned()),
+        uiaa: ActiveValue::Set(uiaa.to_owned()),
+        ..Default::default()
+    };
+    Grades::insert(new_grade).exec(db).await?;
+    Ok(())
+}
 
+async fn remove_grade(db: &DatabaseConnection, id: i32) -> Result<(), DbErr> {
+    let delete_grade = grades::ActiveModel {
+        id: ActiveValue::Set(id),
+        ..Default::default()
+    };
+    delete_grade.delete(db).await?;
+    Ok(())
+}
+
+async fn add_route(db: &DatabaseConnection, name: &str, length: i32, pitches: i32, style: &str, grade_id: i32) -> Result<(), DbErr> {
+    let new_route = routes::ActiveModel {
+        name: ActiveValue::Set(name.to_owned()),
+        length: ActiveValue::Set(length),
+        pitches: ActiveValue::Set(pitches),
+        style: ActiveValue::Set(style.to_owned()),
+        grade_id: ActiveValue::Set(grade_id),
+        ..Default::default()
+    };
+    Routes::insert(new_route).exec(db).await?;
+    Ok(())
+}
+
+async fn remove_route(db: &DatabaseConnection, id: i32) -> Result<(), DbErr> {
+    let delete_route = routes::ActiveModel {
+        id: ActiveValue::Set(id),
+        ..Default::default()
+    };
+    delete_route.delete(db).await?;
+    Ok(())
+}
+
+async fn find_route_name(db: &DatabaseConnection, name: &str) -> Result<Option<routes::Model>, DbErr> {
+    let route = Routes::find().filter(routes::Column::Name.eq(name)).one(db).await?;
+    println!("{:?}", route);
+    Ok(route)
+}
+
+async fn find_routes_by_grade(db: &DatabaseConnection, grade: i32) -> Result<Vec<routes::Model>, DbErr> {
+    let routes = Routes::find().filter(routes::Column::GradeId.eq(grade)).all(db).await?;
+    println!("{:?}", routes);
+    Ok(routes)
+}
 
 async fn run_db() -> Result<(), DbErr> {
     // Connect to the database
@@ -45,68 +98,32 @@ async fn run_db() -> Result<(), DbErr> {
         DbBackend::Sqlite => db,
     };
 
+    // Add a grade
+    add_grade(db, "5.1", "1", "2", "VB", "II").await?;
+
+    // Delete a grade
+    remove_grade(db, 7).await?;
     
-    // Add a route to the database
-    let test_route = routes::ActiveModel {
-        name: ActiveValue::Set("Test Route 5".to_owned()),
-        style: ActiveValue::Set("Sport".to_owned()),
-        length: ActiveValue::Set(180.0),
-        pitches: ActiveValue::Set(3),
-        ..Default::default()
-    };
-    let res = Routes::insert(test_route).exec(db).await?;
+    // Add a route
+    add_route(db, "New Test Route 2", 10, 1, "Trad", 5).await?;
+
+    // Delete a route
+    remove_route(db, 6).await?;
+
+    // Find all grades
+    let all_grades: Vec<grades::Model> = Grades::find().all(db).await?;
     
 
-    // Edit a route in the database
-    let edited_route = routes::ActiveModel {
-        id: ActiveValue::Set(res.last_insert_id as i32),
-        name: ActiveValue::Set("Test Route 6 Edited".to_owned()),
-        style: ActiveValue::NotSet,
-        length: ActiveValue::NotSet,
-        pitches: ActiveValue::NotSet,
-        ..Default::default()
-    };
-    edited_route.update(db).await?;
+    // Find grade by id
+    let some_grade: Option<grades::Model> = Grades::find_by_id(1).one(db).await?;
+    println!("YDS Grade: {}", some_grade.unwrap().yosemite);
 
-    // Add a grade, connected to a route (see note)
-    let vSix = grades::ActiveModel {
-        yosemite: ActiveValue::Set("5.10a".to_owned()),
-        hueco: ActiveValue::Set("V2".to_owned()),
-        font: ActiveValue::Set("6A".to_owned()),
-        french: ActiveValue::Set("6A".to_owned()),
-        uiaa: ActiveValue::Set("VI".to_owned()),
-        route_id: ActiveValue::Set(res.last_insert_id as i32),
-        ..Default::default()
-    };
-    Grades::insert(vSix).exec(db).await?;
+    // Find grade by non-id column
+    let some_other_grade: Option<grades::Model> = Grades::find().filter(grades::Column::Yosemite.eq("5.0")).one(db).await?;
+    println!("Yosemite 5.0 = French {}", some_other_grade.unwrap().french);
 
-    // Some basic ways to find routes
-    let routes: Vec<routes::Model> = Routes::find().all(db).await?;
-    
-    println!("Routes: {:#?}", routes);
-
-    let trial_route: Option<routes::Model> = Routes::find_by_id(1).one(db).await?;
-    assert_eq!(trial_route.is_some(), true);
-    assert_eq!(trial_route.unwrap().name, "Test Route 4 Edited");
-
-    let next_route: Option<routes::Model> = Routes::find()
-        .filter(routes::Column::Name.contains("Test Route 6"))
-        .one(db)
-        .await?;
-    assert_eq!(next_route.is_some(), true);
-
-    // Delete a route and its grade (basic)
-    let deleted_grade = grades::ActiveModel {
-        id: ActiveValue::Set(1),
-        ..Default::default()
-    };
-    let deleted_route = routes::ActiveModel {
-        id: ActiveValue::Set(1),
-        ..Default::default()
-    };
-    deleted_grade.delete(db).await?;
-    deleted_route.delete(db).await?;
-
+    // Find route name
+    let some_route: Option<routes::Model> = find_route_name(db, "New Test Route 2").await?;
 
     Ok(())
 }
