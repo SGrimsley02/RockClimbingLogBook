@@ -61,9 +61,12 @@ async fn find_route_name(db: &DatabaseConnection, name: &str) -> Result<Option<r
 }
 
 async fn find_routes_by_grade(db: &DatabaseConnection, grade: i32) -> Result<Vec<routes::Model>, DbErr> {
-    let routes = Routes::find().filter(routes::Column::GradeId.eq(grade)).all(db).await?;
-    println!("{:?}", routes);
-    Ok(routes)
+    let grades: Vec<grades::Model> = Grades::find()
+        .filter(grades::Column::Id.eq(grade))
+        .all(db)
+        .await?;
+
+    let found_routes: Vec<Vec<routes::Model>> =
 }
 
 async fn run_db() -> Result<(), DbErr> {
