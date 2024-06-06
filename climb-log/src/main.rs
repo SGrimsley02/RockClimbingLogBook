@@ -1,4 +1,4 @@
-#[allow(dead_code, unused_variables, unreachable_patterns)]
+#![allow(unused_imports, dead_code, unreachable_patterns)]
 use std::io;
 use std::fmt;
 
@@ -60,13 +60,16 @@ async fn find_route_name(db: &DatabaseConnection, name: &str) -> Result<Option<r
     Ok(route)
 }
 
-async fn find_routes_by_grade(db: &DatabaseConnection, grade: i32) -> Result<Vec<routes::Model>, DbErr> {
+async fn find_routes_by_grade(db: &DatabaseConnection, grade: i32) -> Result<Vec<String>, DbErr> {
     let grades: Vec<grades::Model> = Grades::find()
         .filter(grades::Column::Id.eq(grade))
         .all(db)
         .await?;
 
-    let found_routes: Vec<Vec<routes::Model>> =
+    let find_routes: Vec<Vec<routes::Model>> = grades.load_many(Routes, db).await?;
+    let mut routes_at_grade: Vec<String> = find_routes[0].to_owned().into_iter().map(|route| route.name.clone()).collect();
+    routes_at_grade.sort_unstable();
+    Ok(routes_at_grade)
 }
 
 async fn run_db() -> Result<(), DbErr> {
@@ -115,7 +118,7 @@ async fn run_db() -> Result<(), DbErr> {
 
     // Find all grades
     let all_grades: Vec<grades::Model> = Grades::find().all(db).await?;
-    
+    println!("{:?}", all_grades.len());
 
     // Find grade by id
     let some_grade: Option<grades::Model> = Grades::find_by_id(1).one(db).await?;
@@ -127,6 +130,11 @@ async fn run_db() -> Result<(), DbErr> {
 
     // Find route name
     let some_route: Option<routes::Model> = find_route_name(db, "New Test Route 2").await?;
+    println!("Route: {:?}", some_route.unwrap());
+
+    // Find routes by grade
+    let routes_at_grade: Vec<String> = find_routes_by_grade(db, 5).await?;
+    println!("Routes at grade 5: {:?}", routes_at_grade);
 
     Ok(())
 }
