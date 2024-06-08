@@ -3,16 +3,24 @@ use std::io;
 use std::fmt;
 
 mod routes_db;
+use eframe::egui::FontDefinitions;
+use eframe::egui::ScrollArea;
+use eframe::NativeOptions;
 use routes_db::RoutesDb;
 use futures::executor::block_on;
 mod climbing;
 use climbing::*;
 
 
+use eframe::{run_native, egui::CentralPanel, epi::App};
+use futures::future::FutureExt;
+use sea_orm::DatabaseConnection;
 
 
 fn main() {
     println!("Hello, world!");
+
+    println!("\nClimbing Structures:");
     println!("{:?}", Yosemite::FiveTenA);
     let route = Route {
         name: String::from("The Nose"),
@@ -37,86 +45,74 @@ fn main() {
     };
     println!("{}", send);
 
-    /*
-    let mut routeName = String::new();
-    println!("Enter a route name: ");
-    io::stdin().read_line(&mut routeName).expect("Failed to read line");
-    let routeName = routeName.trim();
-    println!("Enter the grade of the route: ");
-    let mut grade = String::new();
-    io::stdin().read_line(&mut grade).expect("Failed to read line");
-    let grade = grade.trim();
-    let grade = match grade {
-        "5.1" => Grade::Yosemite(Yosemite::FiveOne),
-        "5.2" => Grade::Yosemite(Yosemite::FiveTwo),
-        "5.3" => Grade::Yosemite(Yosemite::FiveThree),
-        "5.4" => Grade::Yosemite(Yosemite::FiveFour),
-        "5.5" => Grade::Yosemite(Yosemite::FiveFive),
-        "5.6" => Grade::Yosemite(Yosemite::FiveSix),
-        "5.7" => Grade::Yosemite(Yosemite::FiveSeven),
-        "5.8" => Grade::Yosemite(Yosemite::FiveEight),
-        "5.9" => Grade::Yosemite(Yosemite::FiveNine),
-        "5.10a" => Grade::Yosemite(Yosemite::FiveTenA),
-        "5.10b" => Grade::Yosemite(Yosemite::FiveTenB),
-        "5.10c" => Grade::Yosemite(Yosemite::FiveTenC),
-        "5.10d" => Grade::Yosemite(Yosemite::FiveTenD),
-        //finish the match
-        _ => Grade::Yosemite(Yosemite::FiveNine),
-    };
-
-    let mut style = String::new();
-    println!("Enter the style of the route: ");
-    io::stdin().read_line(&mut style).expect("Failed to read line");
-    let style = style.trim();
-    let style = match style {
-        "Boulder" => Style::Boulder,
-        "Top Rope" => Style::TopRope,
-        "Sport" => Style::Sport,
-        "Trad" => Style::Trad,
-        "Ice" => Style::Ice,
-        "Alpine" => Style::Alpine,
-        "Aid" => Style::Aid,
-        "Speed" => Style::Speed,
-        "Free Solo" => Style::FreeSolo,
-        "Deep Water" => Style::DeepWater,
-        _ => Style::Trad,
-    };
-
-    
-    let mut length = String::new();
-    println!("Enter the length of the route: ");
-    io::stdin().read_line(&mut length).expect("Failed to read line");
-    let length: u16 = length.trim().parse().expect("Please type a number");
-
-    let mut pitches = String::new();
-    println!("Enter the number of pitches: ");
-    io::stdin().read_line(&mut pitches).expect("Failed to read line");
-    let pitches: u8 = pitches.trim().parse().expect("Please type a number");
-
-    let mut location = String::new();
-    println!("Enter the location of the route: ");
-    io::stdin().read_line(&mut location).expect("Failed to read line");
-    let location = location.trim();
-
-    let route = Route {
-        name: String::from(routeName),
-        grade: grade,
-        style: vec![style],
-        length: length,
-        pitches: pitches,
-        location: String::from(location),
-    };
-    println!("Here's your route: {}", route);
-
-     */
-
     let v_grade = Hueco::V13;
     let y_grade: Yosemite = v_grade.into();
     println!("{} is Yosemite {}", v_grade, y_grade);
 
+    println!("\nRoutes Database:");
     if let Err(err) = block_on(RoutesDb::run_db()) {
         panic!("{}", err);
     } else {
         println!("Success!");
+    }
+
+
+    println!("\nEGUI User Interface:");
+    // Tutorial: https://www.youtube.com/watch?v=NtUkr_z7l84
+    let app = MyApp;
+    let win_option = NativeOptions::default();
+    run_native(Box::new(app), win_option);
+}
+
+
+struct MyApp;
+impl MyApp {
+    fn new() -> Self {
+        Self
+    }
+    /*
+    fn configure_fonts(&self, context) {
+        let mut font_def = FontDefinitions::default();
+    } 
+    */
+
+    fn render_options(&self, ui: &mut eframe::egui::Ui) {
+        ui.heading("Climbing Log");
+        ui.colored_label(eframe::egui::Color32::RED, "Welcome to the climbing log!");
+        ui.label("Please select an option:");
+        
+        ui.add_space(10.0);
+        ui.add(eframe::egui::Label::new("1. Add Grade").text_style(eframe::egui::TextStyle::Button));
+        ui.label("2. Remove Grade");
+        ui.label("3. Add Route");
+        ui.label("4. Remove Route");
+        ui.label("5. Find Route");
+        ui.label("6. Find All Routes");
+        ui.label("7. Find Routes at Grade");
+        ui.label("8. Log Session");
+        ui.label("9. History");
+        ui.label("10. Stats");
+        ui.label("11. Exit");
+    }
+}
+
+impl App for MyApp {
+    fn setup(&mut self, _context: &eframe::egui::CtxRef, _frame: &mut eframe::epi::Frame<'_>, _storage: Option<&dyn eframe::epi::Storage>) {
+        //self.configure_fonts(context);
+        
+    }
+
+    
+    #[allow(unused_variables)]
+    fn update(&mut self, context: &eframe::egui::CtxRef, frame: &mut eframe::epi::Frame<'_>) {
+        CentralPanel::default().show(context, |ui| {
+            ScrollArea::auto_sized().show(ui, |ui| {
+                self.render_options(ui);
+            });
+        });
+    }
+
+    fn name(&self) -> &str {
+        "MyApp"
     }
 }
