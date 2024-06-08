@@ -74,6 +74,7 @@ impl RoutesDb {
     pub async fn run_db() -> Result<(), DbErr> {
         // Connect to the database
         let db = Database::connect(DATABASE_URL).await?;
+        #[allow(unused_variables)]
         let db = &match db.get_database_backend() {
             DbBackend::MySql => {
                 db.execute(Statement::from_string(
