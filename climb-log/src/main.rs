@@ -3,7 +3,7 @@ use std::io;
 use std::fmt;
 
 mod routes_db;
-use routes_db::run_db;
+use routes_db::RoutesDb;
 use futures::executor::block_on;
 
 
@@ -959,7 +959,7 @@ fn main() {
     let y_grade: Yosemite = v_grade.into();
     println!("{} is Yosemite {}", v_grade, y_grade);
 
-    if let Err(err) = block_on(run_db()) {
+    if let Err(err) = block_on(RoutesDb::run_db()) {
         panic!("{}", err);
     } else {
         println!("Success!");
