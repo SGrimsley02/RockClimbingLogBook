@@ -66,7 +66,7 @@ async fn main() {
     println!("\nEGUI User Interface:");
     
     // Tutorial: https://www.youtube.com/watch?v=NtUkr_z7l84
-    let rt = Arc::new(Runtime::new().unwrap());
+    let rt = Arc::new(Some(Runtime::new().unwrap()));
     let app = MyApp {
         page: Page::Home,
         route_options: RouteOptions::default(),
@@ -78,6 +78,10 @@ async fn main() {
         Box::new(app),
         win_option,
     );
+
+    if let Some(runtime) = Arc::try_unwrap(rt).ok().and_then(|opt| opt) {
+        runtime.shutdown_background();
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -118,7 +122,7 @@ struct MyApp {
     page: Page,
     route_options: RouteOptions,
     database: Arc<RoutesDb>,
-    rt: Arc<Runtime>,
+    rt: Arc<Option<Runtime>>,
 }
 
 impl MyApp {
@@ -233,7 +237,7 @@ impl MyApp {
 
             if ui.button("Save").clicked() {
                 #[allow(unused_parens)] //parenthesis are used for readability
-                if (
+                if ( //Check if all required fields are filled
                     self.route_options.boulder ||
                     self.route_options.sport ||
                     self.route_options.trad ||
@@ -284,21 +288,24 @@ impl MyApp {
                         style.push(Style::Speed);
                     }
 
+                    // Clone everything to pass to the async block
                     let style_str = style.iter().map(|s| s.to_string()).join(", ");
                     let name = self.route_options.name.clone();
                     let length = self.route_options.length.into();
                     let pitches = self.route_options.pitches.into();
+                    #[allow(unused_variables)] //Location doesn't currently exist in the database
                     let location = self.route_options.location.clone();
+                    #[allow(unused_variables)] //Grade is hardcoded for now
                     let grade = self.route_options.grade.clone();
 
-                    // Add the route to the database
+                    // Add the route to the database, starting async stuffe
                     let db = Arc::clone(&self.database);
                     let rt = Arc::clone(&self.rt);
 
-                    rt.spawn(async move {
+                    rt.as_ref().as_ref().unwrap().spawn(async move {
                         <RoutesDb as Clone>::clone(&db).add_route(name, length, pitches, style_str, 10).await.expect("Error, could not add route."); //grade_id is hardcoded for now
                     });
-                    
+                    self.page = Page::Home;
                     
                 } else {
                     ui.label("Please select at least one style.");
