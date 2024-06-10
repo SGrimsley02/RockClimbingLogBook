@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{default, fmt};
 
 #[derive(Debug, Clone)]
 pub struct Route {
@@ -9,6 +9,30 @@ pub struct Route {
     pub pitches: u8,
     pub location: String,
 }
+impl Route {
+    pub fn new(name: String, grade: Grade, style: Vec<Style>, length: u16, pitches: u8, location: String) -> Route {
+        Route {
+            name,
+            grade,
+            style,
+            length,
+            pitches,
+            location,
+        }
+    }
+
+    pub fn default() -> Route {
+        Route {
+            name: String::from("Unnamed Route"),
+            grade: Grade::Yosemite(Yosemite::FiveNine),
+            style: vec![Style::Sport],
+            length: 0,
+            pitches: 1,
+            location: String::from("Unknown Location"),
+        }
+    }
+}
+
 impl std::fmt::Display for Route {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}, {} ft, {} pitches, at {}", self.name, self.grade, self.length, self.pitches, self.location)
@@ -85,7 +109,7 @@ impl std::fmt::Display for Grade {
 }
 
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Yosemite {
     One,
     Two,
@@ -351,6 +375,55 @@ impl std::convert::From<Font> for Yosemite { //Note, bouldering grades are not a
             Font::NineBPlus => Yosemite::FiveFifteenD,
             _ => Yosemite::FiveNine, //default to 5.9
         }
+    }
+}
+
+impl default::Default for Yosemite {
+    fn default() -> Yosemite {
+        Yosemite::FiveNine
+    }
+}
+impl Yosemite {
+    pub fn iter() -> impl Iterator<Item = Yosemite> {
+        [
+            Yosemite::One,
+            Yosemite::Two,
+            Yosemite::Three,
+            Yosemite::Four,
+            Yosemite::FiveOne,
+            Yosemite::FiveTwo,
+            Yosemite::FiveThree,
+            Yosemite::FiveFour,
+            Yosemite::FiveFive,
+            Yosemite::FiveSix,
+            Yosemite::FiveSeven,
+            Yosemite::FiveEight,
+            Yosemite::FiveNine,
+            Yosemite::FiveTenA,
+            Yosemite::FiveTenB,
+            Yosemite::FiveTenC,
+            Yosemite::FiveTenD,
+            Yosemite::FiveElevenA,
+            Yosemite::FiveElevenB,
+            Yosemite::FiveElevenC,
+            Yosemite::FiveElevenD,
+            Yosemite::FiveTwelveA,
+            Yosemite::FiveTwelveB,
+            Yosemite::FiveTwelveC,
+            Yosemite::FiveTwelveD,
+            Yosemite::FiveThirteenA,
+            Yosemite::FiveThirteenB,
+            Yosemite::FiveThirteenC,
+            Yosemite::FiveThirteenD,
+            Yosemite::FiveFourteenA,
+            Yosemite::FiveFourteenB,
+            Yosemite::FiveFourteenC,
+            Yosemite::FiveFourteenD,
+            Yosemite::FiveFifteenA,
+            Yosemite::FiveFifteenB,
+            Yosemite::FiveFifteenC,
+            Yosemite::FiveFifteenD,
+        ].iter().copied()
     }
 }
 
