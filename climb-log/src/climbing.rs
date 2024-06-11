@@ -435,6 +435,7 @@ impl Yosemite {
             Yosemite::Two,
             Yosemite::Three,
             Yosemite::Four,
+            Yosemite::FiveZero,
             Yosemite::FiveOne,
             Yosemite::FiveTwo,
             Yosemite::FiveThree,
