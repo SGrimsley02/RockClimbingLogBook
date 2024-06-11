@@ -94,7 +94,10 @@ enum Page {
     AddRoute,
     RemoveRoute,
     FindRoute,
+    ViewRoute,
+    ViewAllRoutes,
     LogSession,
+    ViewSession,
     History,
     Stats,
     Exit,
@@ -168,11 +171,11 @@ impl MyApp {
         });
     }
 
-    fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         ui.heading("Add Grade");
     }
 
-    fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         ui.heading("Remove Grade");
     }
 
@@ -330,12 +333,24 @@ impl MyApp {
         ui.heading("Find Route");
     }
 
+    fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.heading("View Route");
+    }
+
+    fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.heading("All Routes");
+    }
+
     fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
         ui.heading("Log Session");
     }
 
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
         ui.heading("History");
+    }
+
+    fn render_view_session(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.heading("View Session");
     }
 
     fn render_stats(&mut self, ui: &mut eframe::egui::Ui) {
@@ -374,7 +389,10 @@ impl App for MyApp {
                 Page::AddRoute => self.render_add_route(ui),
                 Page::RemoveRoute => self.render_remove_route(ui),
                 Page::FindRoute => self.render_find_route(ui),
+                Page::ViewRoute => self.render_view_route(ui),
+                Page::ViewAllRoutes => self.render_all_routes(ui),
                 Page::LogSession => self.render_log_session(ui),
+                Page::ViewSession => self.render_view_session(ui),
                 Page::History => self.render_history(ui),
                 Page::Stats => self.render_stats(ui),
                 Page::Exit => self.render_exit(ui),
@@ -387,6 +405,6 @@ impl App for MyApp {
     }
 
     fn name(&self) -> &str {
-        "MyApp"
+        "Climbing Log"
     }
 }
