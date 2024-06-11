@@ -54,9 +54,9 @@ async fn main() {
     let v_grade = Hueco::V13;
     let y_grade: Yosemite = v_grade.into();
     println!("{} is Yosemite {}", v_grade, y_grade);
-
+    let database_test = RoutesDb::new().await.expect("Failed to connect to database");
     println!("\nRoutes Database:");
-    if let Err(err) = block_on(RoutesDb::run_db()) {
+    if let Err(err) = block_on(database_test.run_db()) {
         panic!("{}", err);
     } else {
         println!("Success!");
@@ -66,14 +66,14 @@ async fn main() {
     println!("\nEGUI User Interface:");
     
     // Tutorial: https://www.youtube.com/watch?v=NtUkr_z7l84
-    let rt = Arc::new(Some(Runtime::new().unwrap()));
-    let app = MyApp {
+    let rt = Arc::new(Some(Runtime::new().unwrap())); //Set up async runtime
+    let app = MyApp { //Set up app
         page: Page::Home,
         route_options: RouteOptions::default(),
         database: Arc::new(RoutesDb::new().await.expect("Failed to connect to database")),
         rt: Arc::clone(&rt),
     };
-    let win_option = NativeOptions::default();
+    let win_option = NativeOptions::default(); //Using default options for now
     run_native(
         Box::new(app),
         win_option,
@@ -297,16 +297,19 @@ impl MyApp {
                     let location = self.route_options.location.clone();
                     #[allow(unused_variables)] //Grade is hardcoded for now
                     let grade = self.route_options.grade.clone();
-
+                    let str_grade: String = format!("{}", grade);
+                    
+                    println!("UI Grade: {}", str_grade);
                     // Add the route to the database, starting async stuffe
                     let db = Arc::clone(&self.database);
                     let rt = Arc::clone(&self.rt);
-
-                    rt.as_ref().as_ref().unwrap().spawn(async move {
-                        <RoutesDb as Clone>::clone(&db).add_route(name, length, pitches, style_str, 10).await.expect("Error, could not add route."); //grade_id is hardcoded for now
-                    });
-                    self.page = Page::Home;
                     
+                    rt.as_ref().as_ref().unwrap().spawn(async move {
+                        let grade_id: i32 = <RoutesDb as Clone>::clone(&db).get_grade_id(&str_grade).await.expect("Error, could not get grade id.");
+                        <RoutesDb as Clone>::clone(&db).add_route(name, length, pitches, style_str, grade_id).await.expect("Error, could not add route."); //grade_id is hardcoded for now
+                    });
+                    
+                    self.page = Page::Home;
                 } else {
                     ui.label("Please select at least one style.");
                 }

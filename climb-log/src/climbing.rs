@@ -115,6 +115,7 @@ pub enum Yosemite {
     Two,
     Three,
     Four,
+    FiveZero,
     FiveOne,
     FiveTwo,
     FiveThree,
@@ -157,6 +158,7 @@ impl std::fmt::Display for Yosemite {
             Yosemite::Two => write!(f, "2"),
             Yosemite::Three => write!(f, "3"),
             Yosemite::Four => write!(f, "4"),
+            Yosemite::FiveZero => write!(f, "5.0"),
             Yosemite::FiveOne => write!(f, "5.1"),
             Yosemite::FiveTwo => write!(f, "5.2"),
             Yosemite::FiveThree => write!(f, "5.3"),
@@ -377,7 +379,50 @@ impl std::convert::From<Font> for Yosemite { //Note, bouldering grades are not a
         }
     }
 }
-
+impl std::convert::From<String> for Yosemite {
+    fn from(grade: String) -> Yosemite {
+        match grade.as_str() {
+            "1" => Yosemite::One,
+            "2" => Yosemite::Two,
+            "3" => Yosemite::Three,
+            "4" => Yosemite::Four,
+            "5.1" => Yosemite::FiveOne,
+            "5.2" => Yosemite::FiveTwo,
+            "5.3" => Yosemite::FiveThree,
+            "5.4" => Yosemite::FiveFour,
+            "5.5" => Yosemite::FiveFive,
+            "5.6" => Yosemite::FiveSix,
+            "5.7" => Yosemite::FiveSeven,
+            "5.8" => Yosemite::FiveEight,
+            "5.9" => Yosemite::FiveNine,
+            "5.10a" => Yosemite::FiveTenA,
+            "5.10b" => Yosemite::FiveTenB,
+            "5.10c" => Yosemite::FiveTenC,
+            "5.10d" => Yosemite::FiveTenD,
+            "5.11a" => Yosemite::FiveElevenA,
+            "5.11b" => Yosemite::FiveElevenB,
+            "5.11c" => Yosemite::FiveElevenC,
+            "5.11d" => Yosemite::FiveElevenD,
+            "5.12a" => Yosemite::FiveTwelveA,
+            "5.12b" => Yosemite::FiveTwelveB,
+            "5.12c" => Yosemite::FiveTwelveC,
+            "5.12d" => Yosemite::FiveTwelveD,
+            "5.13a" => Yosemite::FiveThirteenA,
+            "5.13b" => Yosemite::FiveThirteenB,
+            "5.13c" => Yosemite::FiveThirteenC,
+            "5.13d" => Yosemite::FiveThirteenD,
+            "5.14a" => Yosemite::FiveFourteenA,
+            "5.14b" => Yosemite::FiveFourteenB,
+            "5.14c" => Yosemite::FiveFourteenC,
+            "5.14d" => Yosemite::FiveFourteenD,
+            "5.15a" => Yosemite::FiveFifteenA,
+            "5.15b" => Yosemite::FiveFifteenB,
+            "5.15c" => Yosemite::FiveFifteenC,
+            "5.15d" => Yosemite::FiveFifteenD,
+            _ => Yosemite::FiveNine, //default to 5.9
+        }
+    }
+}
 impl default::Default for Yosemite {
     fn default() -> Yosemite {
         Yosemite::FiveNine

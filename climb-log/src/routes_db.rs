@@ -122,7 +122,7 @@ impl RoutesDb {
         Ok(routes_at_grade)
     }
 
-    pub async fn run_db() -> Result<(), DbErr> {
+    pub async fn run_db(self) -> Result<(), DbErr> {
         // Connect to the database
 
         /*
@@ -158,6 +158,8 @@ impl RoutesDb {
         let routes_at_grade: Vec<String> = find_routes_by_grade(5).await?;
         println!("Routes at grade 5: {:?}", routes_at_grade);
         */
+        let grade_id: i32 = self.get_grade_id("5.0").await?;
+        println!("Grade ID: {}", grade_id);
 
 
         println!("Successful refactor!");
