@@ -2,6 +2,7 @@
 use std::io;
 use std::fmt;
 use std::sync::Arc;
+use std::thread;
 use itertools::Itertools;
 
 mod routes_db;
@@ -72,6 +73,7 @@ async fn main() {
         route_options: RouteOptions::default(),
         database: Arc::new(RoutesDb::new().await.expect("Failed to connect to database")),
         rt: Arc::clone(&rt),
+        should_quit: false,
     };
     let win_option = NativeOptions::default(); //Using default options for now
     run_native(
@@ -123,6 +125,7 @@ struct MyApp {
     route_options: RouteOptions,
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
+    should_quit: bool,
 }
 
 impl MyApp {
@@ -312,13 +315,10 @@ impl MyApp {
                     
                     self.page = Page::Home;
                 } else {
-                    ui.label("Please select at least one style.");
+                    ui.label("Please select at least one style."); //Currently only flashes, needs fixing
                 }
                 
             }
-
-
-
         })
     }
 
@@ -343,7 +343,15 @@ impl MyApp {
     }
 
     fn render_exit(&mut self, ui: &mut eframe::egui::Ui) {
-        ui.heading("Exit");
+        ui.heading("Are you sure you'd like to exit?");
+        ui.horizontal(|ui| {
+            if ui.button("Yes").clicked() {
+                self.should_quit = true;
+            }
+            else if ui.button("No").clicked() {
+                self.page = Page::Home;
+            }
+        });
     }
 
 }
@@ -373,6 +381,9 @@ impl App for MyApp {
             }
 
         });
+        if self.should_quit {
+            frame.quit();
+        }
     }
 
     fn name(&self) -> &str {
