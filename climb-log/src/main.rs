@@ -372,7 +372,7 @@ impl MyApp {
                 let rt = Arc::clone(&self.rt);
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     let route = <RoutesDb as Clone>::clone(&db).find_route_name(&name).await.expect("Error, could not find route.");
-                    
+                    println!("{:?}", route);
                 });
                 self.reset();
             }
