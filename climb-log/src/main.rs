@@ -1,7 +1,7 @@
 #![allow(unused_imports, dead_code, unreachable_patterns)]
 use std::io;
 use std::fmt;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use itertools::Itertools;
 
@@ -21,7 +21,7 @@ use futures::future::FutureExt;
 use sea_orm::DatabaseConnection;
 use sea_orm::Database;
 use tokio::runtime::Runtime;
-
+use crate::routes_db::entities::routes::Model;
 
 #[tokio::main]
 async fn main() {
@@ -76,6 +76,7 @@ async fn main() {
         database: Arc::new(RoutesDb::new().await.expect("Failed to connect to database")),
         rt: Arc::clone(&rt),
         should_quit: false,
+        search_result: Arc::new(Mutex::new(None)),
     };
     let win_option = NativeOptions::default(); //Using default options for now
     run_native(
@@ -133,6 +134,7 @@ struct MyApp {
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
+    search_result: Arc<Mutex<Option<Model>>>,
 }
 
 impl MyApp {
@@ -370,11 +372,23 @@ impl MyApp {
                 let name = self.removal_name.clone();
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
+                let search_result = Arc::clone(&self.search_result);
+
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     let route = <RoutesDb as Clone>::clone(&db).find_route_name(&name).await.expect("Error, could not find route.");
                     println!("{:?}", route);
+                    let mut result_lock = search_result.lock().unwrap();
+                    *result_lock = route;
                 });
-                self.reset();
+            }
+            ui.separator();
+            if let Some(route) = &*self.search_result.lock().unwrap() {
+                ui.label(format!("Name: {}", route.name));
+                ui.label(format!("Grade Id: {}", route.grade_id));
+                ui.label(format!("Style: {}", route.style));
+                ui.label(format!("Length: {} ft", route.length));
+                ui.label(format!("Pitches: {}", route.pitches));
+                //ui.label(format!("Location: {}", route.location));
             }
         });
     }

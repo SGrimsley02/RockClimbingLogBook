@@ -1,6 +1,6 @@
 use futures::executor::block_on;
 use sea_orm::*;
-mod entities;
+pub mod entities;
 use entities::{prelude::*, *};
 
 const DATABASE_URL: &str = "sqlite:./sqlite.db?mode=rwc";
