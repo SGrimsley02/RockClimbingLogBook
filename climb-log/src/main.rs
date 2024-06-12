@@ -77,6 +77,7 @@ async fn main() {
         rt: Arc::clone(&rt),
         should_quit: false,
         search_result: Arc::new(Mutex::new(None)),
+        all_routes: Arc::new(Mutex::new(Vec::new())),
     };
     let win_option = NativeOptions::default(); //Using default options for now
     run_native(
@@ -96,6 +97,7 @@ enum Page {
     RemoveGrade,
     AddRoute,
     RemoveRoute,
+    SearchHome,
     FindRoute,
     ViewRoute,
     ViewAllRoutes,
@@ -131,6 +133,7 @@ struct MyApp {
     route_options: RouteOptions,
     removal_name: String,
     find_name: String,
+    all_routes: Arc<Mutex<Vec<Model>>>,
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
@@ -158,9 +161,9 @@ impl MyApp {
                 else if ui.button("Remove Route").clicked() {
                     self.page = Page::RemoveRoute;
                 }
-                else if ui.button("Find Route").clicked() {
-                    self.page = Page::FindRoute;
-                }
+                else if ui.button("Search").clicked() {
+                    self.page = Page::SearchHome;
+                } 
                 else if ui.button("Log Session").clicked() {
                     self.page = Page::LogSession;
                 }
@@ -357,6 +360,18 @@ impl MyApp {
         });
     }
 
+    fn render_search_home(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.heading("Search");
+        ui.horizontal(|ui| {
+            if ui.button("Find Route").clicked() {
+                self.page = Page::FindRoute;
+            }
+            else if ui.button("View All Routes").clicked() {
+                self.page = Page::ViewAllRoutes;
+            }
+        });
+    }
+
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
         ui.heading("Find Route");
 
@@ -399,6 +414,29 @@ impl MyApp {
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
         ui.heading("All Routes");
+        
+        ScrollArea::auto_sized().show(ui, |ui| {
+            let db = Arc::clone(&self.database);
+            let rt = Arc::clone(&self.rt);
+            let results = Arc::clone(&self.all_routes);
+            rt.as_ref().as_ref().unwrap().spawn(async move {
+                let routes = <RoutesDb as Clone>::clone(&db).find_all_routes().await.expect("Error, could not find all routes.");
+                let mut routes_guard = results.lock().unwrap();
+                *routes_guard = routes;
+            });
+            let mut i = 0;
+            let routes = self.all_routes.lock().unwrap();
+            for route in routes.iter() {
+                i+=1;
+                ui.label(format!("Route {}: {}", i, route.name));
+                ui.label(format!("Grade Id: {}", route.grade_id));
+                ui.label(format!("Style: {}", route.style));
+                ui.label(format!("Length: {} ft", route.length));
+                ui.label(format!("Pitches: {}", route.pitches));
+                //ui.label(format!("Location: {}", route.location));
+                ui.separator();
+            }
+        });
     }
 
     fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
@@ -454,6 +492,7 @@ impl App for MyApp {
                 Page::RemoveGrade => self.render_remove_grade(ui),
                 Page::AddRoute => self.render_add_route(ui),
                 Page::RemoveRoute => self.render_remove_route(ui),
+                Page::SearchHome => self.render_search_home(ui),
                 Page::FindRoute => self.render_find_route(ui),
                 Page::ViewRoute => self.render_view_route(ui),
                 Page::ViewAllRoutes => self.render_all_routes(ui),

@@ -131,6 +131,13 @@ impl RoutesDb {
         Ok(routes_at_grade)
     }
 
+    pub async fn find_all_routes(self) -> Result<Vec<routes::Model>, DbErr> {
+        let all_routes: Vec<routes::Model> = Routes::find().all(&self.db).await?;
+        //let mut all_route_names: Vec<String> = all_routes.into_iter().map(|route| route.name.clone()).collect();
+        //all_route_names.sort_unstable();
+        Ok(all_routes)
+    }
+
     pub async fn run_db(self) -> Result<(), DbErr> {
         // Connect to the database
 
