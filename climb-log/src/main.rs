@@ -71,6 +71,8 @@ async fn main() {
     let app = MyApp { //Set up app
         page: Page::Home,
         route_options: RouteOptions::default(),
+        removal_name: String::new(),
+        find_name: String::new(),
         database: Arc::new(RoutesDb::new().await.expect("Failed to connect to database")),
         rt: Arc::clone(&rt),
         should_quit: false,
@@ -126,6 +128,8 @@ struct RouteOptions {
 struct MyApp {
     page: Page,
     route_options: RouteOptions,
+    removal_name: String,
+    find_name: String,
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
@@ -316,7 +320,7 @@ impl MyApp {
                         <RoutesDb as Clone>::clone(&db).add_route(name, length, pitches, style_str, grade_id).await.expect("Error, could not add route."); //grade_id is hardcoded for now
                     });
                     
-                    self.page = Page::Home;
+                    self.reset();
                 } else {
                     ui.label("Please select at least one style."); //Currently only flashes, needs fixing
                 }
@@ -325,12 +329,54 @@ impl MyApp {
         })
     }
 
-    fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
         ui.heading("Remove Route");
+        
+        ScrollArea::auto_sized().show(ui, |ui| {
+            ui.label("Please select a route to remove:");
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("Route:");
+                ui.text_edit_singleline(&mut self.removal_name);
+            });
+            ui.separator();
+            //TODO: Add a dropdown to select from multiple routes with same name when needed
+            ui.separator();
+            if ui.button("Remove").clicked() {
+                let name = self.removal_name.clone();
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    let route = <RoutesDb as Clone>::clone(&db).get_route_id(&name).await.expect("Error, could not get route id.");
+                    <RoutesDb as Clone>::clone(&db).remove_route(route).await.expect("Error, could not remove route.");
+                });
+                self.reset();
+            }
+        });
     }
 
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
         ui.heading("Find Route");
+
+        ScrollArea::auto_sized().show(ui, |ui| {
+            ui.label("Please enter the name of the route:");
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("Route:");
+                ui.text_edit_singleline(&mut self.removal_name);
+            });
+            ui.separator();
+            if ui.button("Find").clicked() {
+                let name = self.removal_name.clone();
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    let route = <RoutesDb as Clone>::clone(&db).find_route_name(&name).await.expect("Error, could not find route.");
+                    
+                });
+                self.reset();
+            }
+        });
     }
 
     fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
@@ -369,6 +415,12 @@ impl MyApp {
         });
     }
 
+    fn reset(&mut self) {
+        self.page = Page::Home;
+        self.route_options = RouteOptions::default();
+        self.removal_name = String::new();
+        self.find_name = String::new();
+    }
 }
 
 

@@ -82,6 +82,11 @@ impl RoutesDb {
         Ok(grade.unwrap().id)
     }
 
+    pub async fn get_grade(self, id: u16) -> Result<grades::Model, DbErr> {
+        let grade = Grades::find_by_id(id as i32).one(&self.db).await?;
+        Ok(grade.unwrap())
+    }
+
     pub async fn add_route(self, name: String, length: i32, pitches: i32, style: String, grade_id: i32) -> Result<(), DbErr> {
         let new_route = routes::ActiveModel {
             name: ActiveValue::Set(name.to_owned()),
@@ -106,8 +111,12 @@ impl RoutesDb {
 
     pub async fn find_route_name(self, name: &str) -> Result<Option<routes::Model>, DbErr> {
         let route = Routes::find().filter(routes::Column::Name.eq(name)).one(&self.db).await?;
-        println!("{:?}", route);
         Ok(route)
+    }
+
+    pub async fn get_route_id(self, name: &str) -> Result<i32, DbErr> {
+        let route = Routes::find().filter(routes::Column::Name.eq(name)).one(&self.db).await?;
+        Ok(route.unwrap().id)
     }
 
     pub async fn find_routes_by_grade(self, grade: i32) -> Result<Vec<String>, DbErr> {
