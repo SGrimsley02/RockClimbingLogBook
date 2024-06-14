@@ -195,9 +195,7 @@ impl RoutesDb {
         let grade_id: i32 = self.clone().get_grade_id("5.1").await?;
         println!("Grade ID: {}", grade_id);
 
-        let some_route = self.clone().find_route_name("Async is Weird").await?;
-        self.clone().add_send(some_route.unwrap(), "14/6/2024".to_string(), Some("Sam".to_string()), "Flash".to_string(), 1, None).await?;
-
+        
 
         println!("Successful refactor!");
 
