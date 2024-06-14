@@ -99,8 +99,9 @@ impl RoutesDb {
         Ok(())
     }
 
-    pub async fn add_send(self, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
+    pub async fn add_send(self, session: i32, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
         let new_send = sends::ActiveModel {
+            session: ActiveValue::Set(session),
             date: ActiveValue::Set(date.to_owned()),
             partner: ActiveValue::Set(partner.to_owned()),
             r#type: ActiveValue::Set(send_type.to_owned()),
@@ -112,6 +113,15 @@ impl RoutesDb {
 
         Sends::insert(new_send).exec(&self.db).await?;
         Ok(())
+    }
+
+    pub async fn get_next_session_id(self) -> Result<i32, DbErr> {
+        // Get the highest session id
+        let id = Sends::find().order_by_desc(sends::Column::Session).one(&self.db).await?;
+        if id.is_none() {
+            return Ok(1);
+        }
+        Ok(id.unwrap().session + 1)
     }
 
     pub async fn remove_route(self, id: i32) -> Result<(), DbErr> {
@@ -192,9 +202,12 @@ impl RoutesDb {
         //self.clone().add_grade("5.0", "(0)", "0", "(VB)", "I").await?;
         //self.clone().add_grade("5.1", "(0)", "1", "(VB)", "I").await?;
         //self.clone().add_grade("5.2", "(0)", "2", "(VB)", "II").await?;
-        let grade_id: i32 = self.clone().get_grade_id("5.1").await?;
+        //self.clone().add_grade("5.0", "(0)", "1", "(VB)", "I").await?;
+        let grade_id: i32 = self.clone().get_grade_id("5.0").await?;
         println!("Grade ID: {}", grade_id);
 
+        let session_id: i32 = self.clone().get_next_session_id().await?;
+        println!("Session ID: {}", session_id);
         
 
         println!("Successful refactor!");

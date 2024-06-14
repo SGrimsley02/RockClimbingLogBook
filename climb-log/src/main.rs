@@ -119,6 +119,17 @@ struct RouteOptions {
     location: String,
 }
 
+#[derive(Default, Clone)]
+struct SendOptions {
+    date: Date,
+    partner: String,
+    send_type: SendType,
+    attempts: u8,
+    notes: String,
+    route: Option<Model>,
+}
+
+
 struct MyApp {
     page: Page,
     route_options: RouteOptions,
@@ -130,6 +141,7 @@ struct MyApp {
     should_quit: bool,
     search_result: Arc<Mutex<Option<Model>>>,
     viewing: Option<Model>,
+    send_options: SendOptions,
 }
 
 impl MyApp {
@@ -146,6 +158,7 @@ impl MyApp {
             should_quit: false,
             search_result: Arc::new(Mutex::new(None)),
             viewing: None,
+            send_options: SendOptions::default(),
         }
     }
 
@@ -492,6 +505,86 @@ impl MyApp {
             self.page = Page::Home;
         }
         ui.heading("Log Session");
+
+        ScrollArea::auto_sized().show(ui, |ui| {
+            /*ui.horizontal(|ui| {
+                ui.label("Indoor or Outdoor?");
+                ui.radio_value(&mut self.route_options.indoor, true, "Indoor");
+                ui.radio_value(&mut self.route_options.indoor, false, "Outdoor");
+            }); */ //Not implemented for indoor yet- outdoor is actually simpler at the moment. Indoor likely needs its own table
+            // ui.separator();
+            
+            ui.horizontal(|ui| {
+                ui.label("Date (mm/dd/yyyy): ");
+                ui.add(egui::DragValue::new(&mut self.send_options.date.month).speed(1.0).clamp_range(1..=12));
+                ui.label("/");
+                ui.add(egui::DragValue::new(&mut self.send_options.date.day).speed(1.0).clamp_range(1..=31));
+                ui.label("/");
+                ui.add(egui::DragValue::new(&mut self.send_options.date.year).speed(1.0).clamp_range(2000..=3000));
+            });
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Partner:");
+                ui.text_edit_singleline(&mut self.send_options.partner);
+            });
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                egui::ComboBox::from_label("Send Type")
+                    .selected_text(format!("{}", self.send_options.send_type))
+                    .show_ui(ui, |ui| {
+                        SendType::iter().for_each(|send_type| {
+                            ui.selectable_value(&mut self.send_options.send_type, send_type, format!("{}", send_type));
+                        });
+                    });
+            });
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Attempts:");
+                ui.add(eframe::egui::widgets::DragValue::new(&mut self.send_options.attempts).speed(1.0));
+            });
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Notes:");
+                ui.text_edit_multiline(&mut self.send_options.notes);
+            });
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Route:");
+                ui.text_edit_singleline(&mut self.find_name);
+            });
+
+            ui.separator();
+
+            //TODO: Add a dropdown to select from multiple routes with same name when needed
+            //TODO: Put the above into a function to reduce redundancy
+            //TODO: Add a button to add additional routes to the session
+                //This will require a vector of SendOptions, then a for loop to add them all to the database
+
+            if ui.button("Log").clicked() {
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                let send_options = self.send_options.clone();
+                let find_name = self.find_name.clone();
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    let route = <RoutesDb as Clone>::clone(&db).find_route_name(&find_name).await.expect("Error, could not find route.");
+                    let route = route.unwrap();
+                    let session_id = <RoutesDb as Clone>::clone(&db).get_next_session_id().await.expect("Error, could not get next session id.");
+                    <RoutesDb as Clone>::clone(&db).add_send(session_id, route, send_options.date.to_string(), Some(send_options.partner), send_options.send_type.to_string(), send_options.attempts as i32, Some(send_options.notes)).await.expect("Error, could not log session.");
+                });
+                self.reset();
+            }
+
+        })
     }
 
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {

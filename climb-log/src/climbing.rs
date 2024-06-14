@@ -925,7 +925,7 @@ impl std::fmt::Display for Uiaa {
 }
 
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, )]
 pub enum SendType {
     Redpoint, //Send after previous attempts/tops, no rests, lead or boulder (free) only
     Flash, //Completion on first attempt, with beta
@@ -950,9 +950,28 @@ impl std::fmt::Display for SendType {
         }
     }
 }
+impl std::default::Default for SendType {
+    fn default() -> SendType {
+        SendType::Attempt
+    }
+}
+impl SendType {
+    pub fn iter() -> impl Iterator<Item = SendType> {
+        [
+            SendType::Redpoint,
+            SendType::Flash,
+            SendType::Onsight,
+            SendType::Pinkpoint,
+            SendType::Attempt,
+            SendType::Top,
+            SendType::Repeat,
+            SendType::FreeSolo,
+        ].iter().copied()
+    }
 
+}
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Date {
     pub year: u16,
     pub month: u8,

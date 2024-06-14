@@ -23,6 +23,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(Sends::Session).integer().not_null())
                     .col(ColumnDef::new(Sends::Date).string().not_null())
                     .col(ColumnDef::new(Sends::Partner).string())
                     .col(ColumnDef::new(Sends::Type).string().not_null())
@@ -50,6 +51,7 @@ impl MigrationTrait for Migration {
 pub enum Sends {
     Table,
     Id,
+    Session,
     Date,
     Partner,
     Type,
