@@ -68,17 +68,7 @@ async fn main() {
     
     // Tutorial: https://www.youtube.com/watch?v=NtUkr_z7l84
     let rt = Arc::new(Some(Runtime::new().unwrap())); //Set up async runtime
-    let app = MyApp { //Set up app
-        page: Page::Home,
-        route_options: RouteOptions::default(),
-        removal_name: String::new(),
-        find_name: String::new(),
-        database: Arc::new(RoutesDb::new().await.expect("Failed to connect to database")),
-        rt: Arc::clone(&rt),
-        should_quit: false,
-        search_result: Arc::new(Mutex::new(None)),
-        all_routes: Arc::new(Mutex::new(Vec::new())),
-    };
+    let app = MyApp::new(&rt).await;
     let win_option = NativeOptions::default(); //Using default options for now
     run_native(
         Box::new(app),
@@ -142,12 +132,29 @@ struct MyApp {
 
 impl MyApp {
 
+    async fn new(rt: &Arc<Option<Runtime>>) -> Self {
+        MyApp {
+            page: Page::Home,
+            route_options: RouteOptions::default(),
+            removal_name: String::new(),
+            find_name: String::new(),
+            all_routes: Arc::new(Mutex::new(Vec::new())),
+            database: Arc::new(RoutesDb::new().await.expect("Failed to connect")),
+            rt: Arc::clone(rt),
+            should_quit: false,
+            search_result: Arc::new(Mutex::new(None)),
+        }
+    }
+
+
+
     fn render_home(&mut self, ui: &mut eframe::egui::Ui) {
         ScrollArea::auto_sized().show(ui, |ui| {
             ui.heading("Climbing Log");
             ui.colored_label(eframe::egui::Color32::RED, "Welcome to the climbing log!");
             ui.label("Please select an option:");
             
+            // All the buttons to go to other pages
             ui.horizontal(|ui| {
                 if ui.button("Add Grade").clicked() {
                     self.page = Page::AddGrade;
@@ -181,14 +188,23 @@ impl MyApp {
     }
 
     fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Add Grade");
     }
 
     fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Remove Grade");
     }
 
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Add Route");
         ScrollArea::auto_sized().show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -335,6 +351,9 @@ impl MyApp {
     }
 
     fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Remove Route");
         
         ScrollArea::auto_sized().show(ui, |ui| {
@@ -361,6 +380,9 @@ impl MyApp {
     }
 
     fn render_search_home(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Search");
         ui.horizontal(|ui| {
             if ui.button("Find Route").clicked() {
@@ -373,6 +395,9 @@ impl MyApp {
     }
 
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Find Route");
 
         ScrollArea::auto_sized().show(ui, |ui| {
@@ -409,10 +434,16 @@ impl MyApp {
     }
 
     fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("View Route");
     }
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("All Routes");
         
         ScrollArea::auto_sized().show(ui, |ui| {
@@ -440,18 +471,30 @@ impl MyApp {
     }
 
     fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Log Session");
     }
 
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("History");
     }
 
     fn render_view_session(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("View Session");
     }
 
     fn render_stats(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.page = Page::Home;
+        }
         ui.heading("Stats");
     }
 
