@@ -4,3 +4,4 @@ pub mod prelude;
 
 pub mod grades;
 pub mod routes;
+pub mod sends;

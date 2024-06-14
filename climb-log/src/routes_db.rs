@@ -99,6 +99,21 @@ impl RoutesDb {
         Ok(())
     }
 
+    pub async fn add_send(self, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
+        let new_send = sends::ActiveModel {
+            date: ActiveValue::Set(date.to_owned()),
+            partner: ActiveValue::Set(partner.to_owned()),
+            r#type: ActiveValue::Set(send_type.to_owned()),
+            attempts: ActiveValue::Set(attempts),
+            notes: ActiveValue::Set(notes.to_owned()),
+            route: ActiveValue::Set(self.clone().get_route_id(&route.name).await.unwrap().to_owned()),
+            ..Default::default()
+        };
+
+        Sends::insert(new_send).exec(&self.db).await?;
+        Ok(())
+    }
+
     pub async fn remove_route(self, id: i32) -> Result<(), DbErr> {
         let delete_route = routes::ActiveModel {
             id: ActiveValue::Set(id),
@@ -179,6 +194,9 @@ impl RoutesDb {
         //self.clone().add_grade("5.2", "(0)", "2", "(VB)", "II").await?;
         let grade_id: i32 = self.clone().get_grade_id("5.1").await?;
         println!("Grade ID: {}", grade_id);
+
+        let some_route = self.clone().find_route_name("Async is Weird").await?;
+        self.clone().add_send(some_route.unwrap(), "14/6/2024".to_string(), Some("Sam".to_string()), "Flash".to_string(), 1, None).await?;
 
 
         println!("Successful refactor!");

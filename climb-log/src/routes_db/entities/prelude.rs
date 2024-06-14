@@ -2,3 +2,4 @@
 
 pub use super::grades::Entity as Grades;
 pub use super::routes::Entity as Routes;
+pub use super::sends::Entity as Sends;

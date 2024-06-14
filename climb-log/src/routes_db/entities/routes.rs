@@ -24,11 +24,19 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Grades,
+    #[sea_orm(has_many = "super::sends::Entity")]
+    Sends,
 }
 
 impl Related<super::grades::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Grades.def()
+    }
+}
+
+impl Related<super::sends::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Sends.def()
     }
 }
 
