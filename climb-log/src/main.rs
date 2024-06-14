@@ -128,6 +128,7 @@ struct MyApp {
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
     search_result: Arc<Mutex<Option<Model>>>,
+    viewing: Option<Model>,
 }
 
 impl MyApp {
@@ -143,6 +144,7 @@ impl MyApp {
             rt: Arc::clone(rt),
             should_quit: false,
             search_result: Arc::new(Mutex::new(None)),
+            viewing: None,
         }
     }
 
@@ -438,6 +440,13 @@ impl MyApp {
             self.page = Page::Home;
         }
         ui.heading("View Route");
+        let view_route = self.viewing.clone().unwrap();
+        ui.label(format!("Grade Id: {}", view_route.grade_id));
+        ui.label(format!("Style: {}", view_route.style));
+        ui.label(format!("Length: {} ft", view_route.length));
+        ui.label(format!("Pitches: {}", view_route.pitches));
+        //ui.label(format!("Location: {}", route.location));
+        //Display notes too
     }
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
@@ -459,7 +468,14 @@ impl MyApp {
             let routes = self.all_routes.lock().unwrap();
             for route in routes.iter() {
                 i+=1;
-                ui.label(format!("Route {}: {}", i, route.name));
+                ui.horizontal(|ui| {
+                    ui.label(format!("Route {}: {}", i, route.name));
+                    if ui.button("View").clicked() {
+                        self.viewing = Some(route.clone());
+                        self.page = Page::ViewRoute;
+                    }
+                });
+                
                 ui.label(format!("Grade Id: {}", route.grade_id));
                 ui.label(format!("Style: {}", route.style));
                 ui.label(format!("Length: {} ft", route.length));

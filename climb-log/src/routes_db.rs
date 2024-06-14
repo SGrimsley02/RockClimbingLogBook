@@ -17,7 +17,6 @@ pub struct RoutesDb {
 impl RoutesDb {
     pub async fn new() -> Result<RoutesDb, DbErr> {
         let db = Database::connect(DATABASE_URL).await?;
-        #[allow(unused_variables)]
         let db = &match db.get_database_backend() {
             DbBackend::MySql => {
                 db.execute(Statement::from_string(
@@ -138,7 +137,7 @@ impl RoutesDb {
         Ok(all_routes)
     }
 
-    pub async fn run_db(self) -> Result<(), DbErr> {
+    pub async fn run_db(self) -> Result<(), DbErr> { //Currently using this mostly just to test some features
         // Connect to the database
 
         /*
@@ -183,7 +182,7 @@ impl RoutesDb {
         Ok(())
     }
 
-    pub async fn connect() -> Result<DatabaseConnection, DbErr> {
+    async fn connect() -> Result<DatabaseConnection, DbErr> {
         let db = Database::connect(DATABASE_URL).await?;
         Ok(db.into())
     }
