@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_routes_table;
 mod m20220101_000001_create_grades_table;
+mod m20220101_000001_create_sends_table;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220101_000001_create_grades_table::Migration),
             Box::new(m20220101_000001_create_routes_table::Migration),
+            Box::new(m20220101_000001_create_sends_table::Migration),
             
             ]
     }

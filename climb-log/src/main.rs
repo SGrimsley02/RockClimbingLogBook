@@ -45,7 +45,6 @@ async fn main() {
             day: 1,
         },
         partner: String::from("Alex Honnold"),
-        completed: true,
         attempts: 1,
         send_type: SendType::FreeSolo,
         notes: String::from("Free solo"),
@@ -70,11 +69,13 @@ async fn main() {
     let rt = Arc::new(Some(Runtime::new().unwrap())); //Set up async runtime
     let app = MyApp::new(&rt).await;
     let win_option = NativeOptions::default(); //Using default options for now
+    // Run
     run_native(
         Box::new(app),
         win_option,
     );
 
+    // Clean quit
     if let Some(runtime) = Arc::try_unwrap(rt).ok().and_then(|opt| opt) {
         runtime.shutdown_background();
     }
@@ -446,7 +447,7 @@ impl MyApp {
         ui.label(format!("Length: {} ft", view_route.length));
         ui.label(format!("Pitches: {}", view_route.pitches));
         //ui.label(format!("Location: {}", route.location));
-        //Display notes too
+        //Display notes too once implemented
     }
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {

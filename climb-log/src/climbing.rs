@@ -44,7 +44,6 @@ pub struct Send {
     pub route: Route,
     pub date: Date,
     pub partner: String,
-    pub completed: bool,
     pub attempts: u8,
     pub send_type: SendType,
     pub notes: String,
