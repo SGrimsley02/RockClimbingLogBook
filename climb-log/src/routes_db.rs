@@ -173,7 +173,11 @@ impl RoutesDb {
         let routes_at_grade: Vec<String> = find_routes_by_grade(5).await?;
         println!("Routes at grade 5: {:?}", routes_at_grade);
         */
-        let grade_id: i32 = self.get_grade_id("5.0").await?;
+
+        self.clone().add_grade("5.0", "(0)", "0", "(VB)", "I").await?;
+        self.clone().add_grade("5.1", "(0)", "1", "(VB)", "I").await?;
+        self.clone().add_grade("5.2", "(0)", "2", "(VB)", "II").await?;
+        let grade_id: i32 = self.clone().get_grade_id("5.1").await?;
         println!("Grade ID: {}", grade_id);
 
 
