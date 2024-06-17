@@ -423,7 +423,8 @@ impl MyApp {
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
-        }
+        } else {
+        
         ui.heading("Find Route");
 
         ScrollArea::auto_sized().show(ui, |ui| {
@@ -457,12 +458,14 @@ impl MyApp {
                 //ui.label(format!("Location: {}", route.location));
             }
         });
+        
+        }
     }
 
     fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
-        }
+        } else {
         ui.heading("View Route");
         let view_route = self.viewing.clone().unwrap();
         ui.label(format!("Grade Id: {}", view_route.grade_id));
@@ -471,6 +474,7 @@ impl MyApp {
         ui.label(format!("Pitches: {}", view_route.pitches));
         //ui.label(format!("Location: {}", route.location));
         //Display notes too once implemented
+        }
     }
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
