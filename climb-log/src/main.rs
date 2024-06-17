@@ -126,6 +126,7 @@ struct SendOptions {
     send_type: SendType,
     attempts: u8,
     notes: String,
+    route_name: String,
     route: Option<Model>,
 }
 
@@ -142,6 +143,8 @@ struct MyApp {
     search_result: Arc<Mutex<Option<Model>>>,
     viewing: Option<Model>,
     send_options: SendOptions,
+    session: Vec<SendOptions>,
+    session_id: i32,
 }
 
 impl MyApp {
@@ -159,6 +162,8 @@ impl MyApp {
             search_result: Arc::new(Mutex::new(None)),
             viewing: None,
             send_options: SendOptions::default(),
+            session: Vec::new(),
+            session_id: 0,
         }
     }
 
@@ -560,26 +565,40 @@ impl MyApp {
 
             ui.horizontal(|ui| {
                 ui.label("Route:");
-                ui.text_edit_singleline(&mut self.find_name);
+                ui.text_edit_singleline(&mut self.send_options.route_name);
             });
 
             ui.separator();
 
             //TODO: Add a dropdown to select from multiple routes with same name when needed
-            //TODO: Put the above into a function to reduce redundancy
-            //TODO: Add a button to add additional routes to the session
-                //This will require a vector of SendOptions, then a for loop to add them all to the database
+            //TODO: When beautifying, make it easier to add multiple routes at once
 
-            if ui.button("Log").clicked() {
+            if ui.button("Add Send").clicked() {
+                //Add send to the session vector
+                self.session.push(self.send_options.clone());
+                let date = self.send_options.date.clone();
+                self.send_options = SendOptions::default();
+                self.send_options.date = date;
+            }
+
+            if ui.button("Log Session").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
-                let send_options = self.send_options.clone();
-                let find_name = self.find_name.clone();
+                let sends = self.session.clone();
+                
                 rt.as_ref().as_ref().unwrap().spawn(async move {
-                    let route = <RoutesDb as Clone>::clone(&db).find_route_name(&find_name).await.expect("Error, could not find route.");
-                    let route = route.unwrap();
+                    
+                    
                     let session_id = <RoutesDb as Clone>::clone(&db).get_next_session_id().await.expect("Error, could not get next session id.");
-                    <RoutesDb as Clone>::clone(&db).add_send(session_id, route, send_options.date.to_string(), Some(send_options.partner), send_options.send_type.to_string(), send_options.attempts as i32, Some(send_options.notes)).await.expect("Error, could not log session.");
+                    for send in sends.iter() {
+                        let find_name = send.route_name.clone();
+                        let partner = if send.partner.is_empty() { None } else { Some(send.partner.clone()) };
+                        let notes = if send.notes.is_empty() { None } else { Some(send.notes.clone()) };
+                        let route = <RoutesDb as Clone>::clone(&db).find_route_name(&find_name).await.expect("Error, could not find route.");
+                        let route = route.unwrap();
+                        <RoutesDb as Clone>::clone(&db).add_send(session_id, route, send.date.to_string(), partner, send.send_type.to_string(), send.attempts as i32, notes).await.expect("Error, could not log session.");
+                    }
+                    
                 });
                 self.reset();
             }
