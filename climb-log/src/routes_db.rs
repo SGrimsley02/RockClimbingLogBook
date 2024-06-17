@@ -115,6 +115,12 @@ impl RoutesDb {
         Ok(())
     }
 
+    pub async fn get_session(self, id: i32) -> Result<Vec<sends::Model>, DbErr> {
+        let session = Sends::find().filter(sends::Column::Session.eq(id)).all(&self.db).await?;
+        Ok(session)
+    }
+
+
     pub async fn get_next_session_id(self) -> Result<i32, DbErr> {
         // Get the highest session id
         let id = Sends::find().order_by_desc(sends::Column::Session).one(&self.db).await?;

@@ -1,7 +1,7 @@
 #![allow(unused_imports, dead_code, unreachable_patterns)]
 use std::io;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use itertools::Itertools;
 
@@ -21,7 +21,8 @@ use futures::future::FutureExt;
 use sea_orm::DatabaseConnection;
 use sea_orm::Database;
 use tokio::runtime::Runtime;
-use crate::routes_db::entities::routes::Model;
+use crate::routes_db::entities::routes::Model as RouteModel;
+use crate::routes_db::entities::sends::Model as SendModel;
 
 #[tokio::main]
 async fn main() {
@@ -127,7 +128,7 @@ struct SendOptions {
     attempts: u8,
     notes: String,
     route_name: String,
-    route: Option<Model>,
+    route: Option<RouteModel>,
 }
 
 
@@ -136,15 +137,17 @@ struct MyApp {
     route_options: RouteOptions,
     removal_name: String,
     find_name: String,
-    all_routes: Arc<Mutex<Vec<Model>>>,
+    all_routes: Arc<Mutex<Vec<RouteModel>>>,
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
-    search_result: Arc<Mutex<Option<Model>>>,
-    viewing: Option<Model>,
+    search_result: Arc<Mutex<Option<RouteModel>>>,
+    viewing: Option<RouteModel>,
     send_options: SendOptions,
     session: Vec<SendOptions>,
     session_id: i32,
+    cur_session: Arc<Mutex<Vec<SendModel>>>,
+    view_session: Option<SendModel>,
 }
 
 impl MyApp {
@@ -164,6 +167,8 @@ impl MyApp {
             send_options: SendOptions::default(),
             session: Vec::new(),
             session_id: 0,
+            cur_session: Arc::new(Mutex::new(Vec::new())),
+            view_session: None,
         }
     }
 
@@ -210,21 +215,21 @@ impl MyApp {
 
     fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Add Grade");
     }
 
     fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Remove Grade");
     }
 
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Add Route");
         ScrollArea::auto_sized().show(ui, |ui| {
@@ -373,7 +378,7 @@ impl MyApp {
 
     fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Remove Route");
         
@@ -402,7 +407,7 @@ impl MyApp {
 
     fn render_search_home(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Search");
         ui.horizontal(|ui| {
@@ -417,7 +422,7 @@ impl MyApp {
 
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Find Route");
 
@@ -456,7 +461,7 @@ impl MyApp {
 
     fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("View Route");
         let view_route = self.viewing.clone().unwrap();
@@ -470,7 +475,7 @@ impl MyApp {
 
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("All Routes");
         
@@ -507,7 +512,7 @@ impl MyApp {
 
     fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Log Session");
 
@@ -603,27 +608,68 @@ impl MyApp {
                 });
                 self.reset();
             }
-
         })
     }
 
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("History");
+
+        // Get all sessions using the database
+        // Display them all in a scroll area, backwards by session id (ie, most recent first)
+        // Each session should have a button to view it in more detail
+
+        ScrollArea::auto_sized().show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Search: ");
+                ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
+            });
+
+            ui.separator();
+
+            let db = Arc::clone(&self.database);
+            let rt = Arc::clone(&self.rt);
+            let results = Arc::clone(&self.cur_session);
+            let session_id = self.session_id;
+            rt.as_ref().as_ref().unwrap().spawn(async move {
+                let sessions = <RoutesDb as Clone>::clone(&db).get_session(session_id).await.expect("Error, could not get all sessions.");
+                let mut sessions_guard = results.lock().unwrap();
+                *sessions_guard = sessions;
+            });
+
+            let sessions: MutexGuard<Vec<SendModel>> = self.cur_session.lock().unwrap();
+            for session in sessions.iter() {
+                ui.horizontal(|ui| {
+                    ui.label(format!("Session {}: ", session.session));
+                    if ui.button("View").clicked() {
+                        self.view_session = Some(session.clone());
+                        self.page = Page::ViewSession;
+                    }
+                });
+                let session = session.clone();
+                ui.label(format!("Date: {}", session.date));
+                ui.label(format!("Partner: {}", session.partner.unwrap_or("None".to_string())));
+                ui.label(format!("Type: {}", session.r#type));
+                ui.label(format!("Attempts: {}", session.attempts));
+                ui.label(format!("Route: {}", session.route));
+                ui.separator();
+            }
+            
+        });
     }
 
     fn render_view_session(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("View Session");
     }
 
     fn render_stats(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
-            self.page = Page::Home;
+            self.reset();
         }
         ui.heading("Stats");
     }
@@ -635,7 +681,7 @@ impl MyApp {
                 self.should_quit = true;
             }
             else if ui.button("No").clicked() {
-                self.page = Page::Home;
+                self.reset();
             }
         });
     }
@@ -645,6 +691,13 @@ impl MyApp {
         self.route_options = RouteOptions::default();
         self.removal_name = String::new();
         self.find_name = String::new();
+        self.all_routes = Arc::new(Mutex::new(Vec::new()));
+        self.search_result = Arc::new(Mutex::new(None));
+        self.viewing = None;
+        self.send_options = SendOptions::default();
+        self.session = Vec::new();
+        self.cur_session = Arc::new(Mutex::new(Vec::new()));
+        self.view_session = None;
     }
 }
 
