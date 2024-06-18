@@ -107,6 +107,14 @@ impl std::fmt::Display for Grade {
     }
 }
 
+#[derive(Debug, Copy, Clone, Default)]
+pub struct FullGrade {
+    pub yosemite: Yosemite,
+    pub font: Font,
+    pub hueco: Hueco,
+    pub french: French,
+    pub uiaa: Uiaa,
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Yosemite {
@@ -468,7 +476,7 @@ impl Yosemite {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Font {
     OneMinus,
     One,
@@ -477,6 +485,7 @@ pub enum Font {
     Two,
     TwoPlus,
     ThreeMinus,
+    #[default]
     Three,
     ThreePlus,
     FourMinus,
@@ -580,12 +589,69 @@ impl std::fmt::Display for Font {
         }
     }
 }
+impl Font {
+    pub fn iter() -> impl Iterator<Item = Font> {
+        [
+            Font::OneMinus,
+            Font::One,
+            Font::OnePlus,
+            Font::TwoMinus,
+            Font::Two,
+            Font::TwoPlus,
+            Font::ThreeMinus,
+            Font::Three,
+            Font::ThreePlus,
+            Font::FourMinus,
+            Font::Four,
+            Font::FourPlus,
+            Font::FiveMinus,
+            Font::Five,
+            Font::FivePlus,
+            Font::SixAMinus,
+            Font::SixA,
+            Font::SixAPlus,
+            Font::SixBMinus,
+            Font::SixB,
+            Font::SixBPlus,
+            Font::SixCMinus,
+            Font::SixC,
+            Font::SixCPlus,
+            Font::SevenAMinus,
+            Font::SevenA,
+            Font::SevenAPlus,
+            Font::SevenBMinus,
+            Font::SevenB,
+            Font::SevenBPlus,
+            Font::SevenCMinus,
+            Font::SevenC,
+            Font::SevenCPlus,
+            Font::EightAMinus,
+            Font::EightA,
+            Font::EightAPlus,
+            Font::EightBMinus,
+            Font::EightB,
+            Font::EightBPlus,
+            Font::EightCMinus,
+            Font::EightC,
+            Font::EightCPlus,
+            Font::NineAMinus,
+            Font::NineA,
+            Font::NineAPlus,
+            Font::NineBMinus,
+            Font::NineB,
+            Font::NineBPlus,
+            Font::NineCMinus,
+            Font::NineC,
+            Font::NineCPlus,
+        ].iter().copied()
+    }
+}
 
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Hueco { //V Scale
     Vb,
     V0Minus,
+    #[default]
     V0,
     V0Plus,
     V1Minus,
@@ -702,9 +768,69 @@ impl std::fmt::Display for Hueco {
         }
     }
 }
+impl Hueco {
+    pub fn iter() -> impl Iterator<Item = Hueco> {
+        [
+            Hueco::Vb,
+            Hueco::V0Minus,
+            Hueco::V0,
+            Hueco::V0Plus,
+            Hueco::V1Minus,
+            Hueco::V1,
+            Hueco::V1Plus,
+            Hueco::V2Minus,
+            Hueco::V2,
+            Hueco::V2Plus,
+            Hueco::V3Minus,
+            Hueco::V3,
+            Hueco::V3Plus,
+            Hueco::V4Minus,
+            Hueco::V4,
+            Hueco::V4Plus,
+            Hueco::V5Minus,
+            Hueco::V5,
+            Hueco::V5Plus,
+            Hueco::V6Minus,
+            Hueco::V6,
+            Hueco::V6Plus,
+            Hueco::V7Minus,
+            Hueco::V7,
+            Hueco::V7Plus,
+            Hueco::V8Minus,
+            Hueco::V8,
+            Hueco::V8Plus,
+            Hueco::V9Minus,
+            Hueco::V9,
+            Hueco::V9Plus,
+            Hueco::V10Minus,
+            Hueco::V10,
+            Hueco::V10Plus,
+            Hueco::V11Minus,
+            Hueco::V11,
+            Hueco::V11Plus,
+            Hueco::V12Minus,
+            Hueco::V12,
+            Hueco::V12Plus,
+            Hueco::V13Minus,
+            Hueco::V13,
+            Hueco::V13Plus,
+            Hueco::V14Minus,
+            Hueco::V14,
+            Hueco::V14Plus,
+            Hueco::V15Minus,
+            Hueco::V15,
+            Hueco::V15Plus,
+            Hueco::V16Minus,
+            Hueco::V16,
+            Hueco::V16Plus,
+            Hueco::V17Minus,
+            Hueco::V17,
+            Hueco::V17Plus,
+        ].iter().copied()
+    }
+}
 
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum French { //5a, 6a+-, etc.
     One,
     Two,
@@ -715,6 +841,7 @@ pub enum French { //5a, 6a+-, etc.
     FiveA,
     FiveB,
     FiveC,
+    #[default]
     SixAMinus,
     SixA,
     SixAPlus,
@@ -849,8 +976,59 @@ impl std::convert::From<Yosemite> for French {
     }
 
 }
+impl French {
+    pub fn iter() -> impl Iterator<Item = French> {
+        [
+            French::One,
+            French::Two,
+            French::Three,
+            French::FourA,
+            French::FourB,
+            French::FourC,
+            French::FiveA,
+            French::FiveB,
+            French::FiveC,
+            French::SixAMinus,
+            French::SixA,
+            French::SixAPlus,
+            French::SixBMinus,
+            French::SixB,
+            French::SixBPlus,
+            French::SixCMinus,
+            French::SixC,
+            French::SixCPlus,
+            French::SevenAMinus,
+            French::SevenA,
+            French::SevenAPlus,
+            French::SevenBMinus,
+            French::SevenB,
+            French::SevenBPlus,
+            French::SevenCMinus,
+            French::SevenC,
+            French::SevenCPlus,
+            French::EightAMinus,
+            French::EightA,
+            French::EightAPlus,
+            French::EightBMinus,
+            French::EightB,
+            French::EightBPlus,
+            French::EightCMinus,
+            French::EightC,
+            French::EightCPlus,
+            French::NineAMinus,
+            French::NineA,
+            French::NineAPlus,
+            French::NineBMinus,
+            French::NineB,
+            French::NineBPlus,
+            French::NineCMinus,
+            French::NineC,
+            French::NineCPlus,
+        ].iter().copied()
+    }
+}
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Uiaa {
     I,
     Ii,
@@ -861,6 +1039,7 @@ pub enum Uiaa {
     VMinus,
     V,
     VPlus,
+    #[default]
     ViMinus,
     Vi,
     ViPlus,
@@ -919,7 +1098,42 @@ impl std::fmt::Display for Uiaa {
         }
     }
 }
-
+impl Uiaa {
+    pub fn iter() -> impl Iterator<Item = Uiaa> {
+        [
+            Uiaa::I,
+            Uiaa::Ii,
+            Uiaa::Iii,
+            Uiaa::IvMinus,
+            Uiaa::Iv,
+            Uiaa::IvPlus,
+            Uiaa::VMinus,
+            Uiaa::V,
+            Uiaa::VPlus,
+            Uiaa::ViMinus,
+            Uiaa::Vi,
+            Uiaa::ViPlus,
+            Uiaa::ViiMinus,
+            Uiaa::Vii,
+            Uiaa::ViiPlus,
+            Uiaa::ViiiMinus,
+            Uiaa::Viii,
+            Uiaa::ViiiPlus,
+            Uiaa::IxMinus,
+            Uiaa::Ix,
+            Uiaa::IxPlus,
+            Uiaa::XMinus,
+            Uiaa::X,
+            Uiaa::XPlus,
+            Uiaa::XiMinus,
+            Uiaa::Xi,
+            Uiaa::XiPlus,
+            Uiaa::XiiMinus,
+            Uiaa::Xii,
+            Uiaa::XiiPlus,
+        ].iter().copied()
+    }
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum SendType {

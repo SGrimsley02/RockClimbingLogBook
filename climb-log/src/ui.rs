@@ -86,6 +86,7 @@ pub struct MyApp {
     session_id: i32,
     cur_session: Arc<Mutex<Vec<SendModel>>>,
     view_session: Option<SendModel>,
+    add_grade: FullGrade,
 }
 
 impl MyApp {
@@ -107,6 +108,7 @@ impl MyApp {
             session_id: 0,
             cur_session: Arc::new(Mutex::new(Vec::new())),
             view_session: None,
+            add_grade: FullGrade::default(),
         }
     }
 
@@ -170,6 +172,62 @@ impl MyApp {
             self.reset();
         }
         ui.heading("Add Grade");
+        ScrollArea::auto_sized().show(ui, |ui| {
+            
+
+                egui::ComboBox::from_label("Yosemite Grade")
+                    .selected_text(format!("{}", self.add_grade.yosemite))
+                    .show_ui(ui, |ui| {
+                        Yosemite::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{}", grade));
+                        });
+                    });
+            
+            ui.separator();
+            
+
+                egui::ComboBox::from_label("Hueco Grade")
+                    .selected_text(format!("{}", self.add_grade.hueco))
+                    .show_ui(ui, |ui| {
+                        Hueco::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
+                        });
+                    });
+            
+            ui.separator();
+            
+
+                egui::ComboBox::from_label("Font Grade")
+                    .selected_text(format!("{}", self.add_grade.font))
+                    .show_ui(ui, |ui| {
+                        Font::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
+                        });
+                    });
+            
+            ui.separator();
+            
+                egui::ComboBox::from_label("French Grade")
+                    .selected_text(format!("{}", self.add_grade.french))
+                    .show_ui(ui, |ui| {
+                        French::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.add_grade.french, grade, format!("{}", grade));
+                        });
+                    });
+            
+            ui.separator();
+            
+
+                egui::ComboBox::from_label("UIAA Grade")
+                    .selected_text(format!("{}", self.add_grade.uiaa))
+                    .show_ui(ui, |ui| {
+                        Uiaa::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.add_grade.uiaa, grade, format!("{}", grade));
+                        });
+                    });
+                
+            
+        })
     }
 
     fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
