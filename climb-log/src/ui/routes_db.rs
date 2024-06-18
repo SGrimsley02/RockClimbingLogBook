@@ -86,6 +86,7 @@ impl RoutesDb {
         Ok(grade.unwrap())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn add_route(self, name: String, length: i32, pitches: i32, style: String, grade_id: i32) -> Result<(), DbErr> {
         let new_route = routes::ActiveModel {
             name: ActiveValue::Set(name.to_owned()),
@@ -99,6 +100,7 @@ impl RoutesDb {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn add_send(self, session: i32, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
         let new_send = sends::ActiveModel {
             session: ActiveValue::Set(session),
@@ -156,7 +158,7 @@ impl RoutesDb {
             .await?;
 
         let find_routes: Vec<Vec<routes::Model>> = grades.load_many(Routes, &self.db).await?;
-        let mut routes_at_grade: Vec<String> = find_routes[0].to_owned().into_iter().map(|route| route.name.clone()).collect();
+        let mut routes_at_grade: Vec<String> = find_routes[0].iter().cloned().map(|route| route.name.clone()).collect();
         routes_at_grade.sort_unstable();
         Ok(routes_at_grade)
     }

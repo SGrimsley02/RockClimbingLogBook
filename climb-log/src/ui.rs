@@ -444,10 +444,10 @@ impl MyApp {
                 let mut routes_guard = results.lock().unwrap();
                 *routes_guard = routes;
             });
-            let mut i = 0;
+            
             let routes = self.all_routes.lock().unwrap();
-            for route in routes.iter() {
-                i+=1;
+            for (i, route) in routes.iter().enumerate() {
+                
                 ui.horizontal(|ui| {
                     ui.label(format!("Route {}: {}", i, route.name));
                     if ui.button("View").clicked() {

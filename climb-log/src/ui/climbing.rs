@@ -1,4 +1,4 @@
-use std::{default, fmt};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Route {
@@ -108,8 +108,7 @@ impl std::fmt::Display for Grade {
 }
 
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Yosemite {
     One,
     Two,
@@ -199,7 +198,7 @@ impl std::fmt::Display for Yosemite {
 impl std::convert::From<Hueco> for Yosemite { //Note, since this is between bouldering and big wall, it's not a solid conversion
     fn from(hueco: Hueco) -> Yosemite {
         match hueco {
-            Hueco::VB => Yosemite::FiveFive,
+            Hueco::Vb => Yosemite::FiveFive,
             Hueco::V0Minus => Yosemite::FiveEight,
             Hueco::V0 => Yosemite::FiveNine,
             Hueco::V0Plus => Yosemite::FiveTenA,
@@ -292,35 +291,35 @@ impl std::convert::From<Uiaa> for Yosemite {
     fn from(uiaa: Uiaa) -> Yosemite {
         match uiaa {
             Uiaa::I => Yosemite::FiveOne,
-            Uiaa::II => Yosemite::FiveTwo,
-            Uiaa::III => Yosemite::FiveThree,
-            Uiaa::IVMinus => Yosemite::FiveFour,
-            Uiaa::IV => Yosemite::FiveFour,
-            Uiaa::IVPlus => Yosemite::FiveFive,
+            Uiaa::Ii => Yosemite::FiveTwo,
+            Uiaa::Iii => Yosemite::FiveThree,
+            Uiaa::IvMinus => Yosemite::FiveFour,
+            Uiaa::Iv => Yosemite::FiveFour,
+            Uiaa::IvPlus => Yosemite::FiveFive,
             Uiaa::VMinus => Yosemite::FiveSix,
             Uiaa::V => Yosemite::FiveSeven,
             Uiaa::VPlus => Yosemite::FiveEight,
-            Uiaa::VIMinus => Yosemite::FiveNine,
-            Uiaa::VI => Yosemite::FiveTenA,
-            Uiaa::VIPlus => Yosemite::FiveTenB,
-            Uiaa::VIIMinus => Yosemite::FiveTenC,
-            Uiaa::VII => Yosemite::FiveTenD,
-            Uiaa::VIIPlus => Yosemite::FiveElevenA,
-            Uiaa::VIIIMinus => Yosemite::FiveElevenC,
-            Uiaa::VIII => Yosemite::FiveElevenD,
-            Uiaa::VIIIPlus => Yosemite::FiveTwelveA,
-            Uiaa::IXMinus => Yosemite::FiveTwelveC,
-            Uiaa::IX => Yosemite::FiveTwelveD,
-            Uiaa::IXPlus => Yosemite::FiveThirteenB,
+            Uiaa::ViMinus => Yosemite::FiveNine,
+            Uiaa::Vi => Yosemite::FiveTenA,
+            Uiaa::ViPlus => Yosemite::FiveTenB,
+            Uiaa::ViiMinus => Yosemite::FiveTenC,
+            Uiaa::Vii => Yosemite::FiveTenD,
+            Uiaa::ViiPlus => Yosemite::FiveElevenA,
+            Uiaa::ViiiMinus => Yosemite::FiveElevenC,
+            Uiaa::Viii => Yosemite::FiveElevenD,
+            Uiaa::ViiiPlus => Yosemite::FiveTwelveA,
+            Uiaa::IxMinus => Yosemite::FiveTwelveC,
+            Uiaa::Ix => Yosemite::FiveTwelveD,
+            Uiaa::IxPlus => Yosemite::FiveThirteenB,
             Uiaa::XMinus => Yosemite::FiveThirteenC,
             Uiaa::X => Yosemite::FiveThirteenD,
             Uiaa::XPlus => Yosemite::FiveFourteenA,
-            Uiaa::XIMinus => Yosemite::FiveFourteenB,
-            Uiaa::XI => Yosemite::FiveFourteenD,
-            Uiaa::XIPlus => Yosemite::FiveFifteenA,
-            Uiaa::XIIMinus => Yosemite::FiveFifteenB,
-            Uiaa::XII => Yosemite::FiveFifteenC,
-            Uiaa::XIIPlus => Yosemite::FiveFifteenD,
+            Uiaa::XiMinus => Yosemite::FiveFourteenB,
+            Uiaa::Xi => Yosemite::FiveFourteenD,
+            Uiaa::XiPlus => Yosemite::FiveFifteenA,
+            Uiaa::XiiMinus => Yosemite::FiveFifteenB,
+            Uiaa::Xii => Yosemite::FiveFifteenC,
+            Uiaa::XiiPlus => Yosemite::FiveFifteenD,
             _ => Yosemite::FiveNine, //default to 5.9
         }
     }
@@ -585,7 +584,7 @@ impl std::fmt::Display for Font {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Hueco { //V Scale
-    VB,
+    Vb,
     V0Minus,
     V0,
     V0Plus,
@@ -645,7 +644,7 @@ pub enum Hueco { //V Scale
 impl std::fmt::Display for Hueco {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Hueco::VB => write!(f, "VB"),
+            Hueco::Vb => write!(f, "VB"),
             Hueco::V0Minus => write!(f, "V0-"),
             Hueco::V0 => write!(f, "V0"),
             Hueco::V0Plus => write!(f, "V0+"),
@@ -854,76 +853,75 @@ impl std::convert::From<Yosemite> for French {
 #[derive(Debug, Copy, Clone)]
 pub enum Uiaa {
     I,
-    II,
-    III,
-    IVMinus,
-    IV,
-    IVPlus,
+    Ii,
+    Iii,
+    IvMinus,
+    Iv,
+    IvPlus,
     VMinus,
     V,
     VPlus,
-    VIMinus,
-    VI,
-    VIPlus,
-    VIIMinus,
-    VII,
-    VIIPlus,
-    VIIIMinus,
-    VIII,
-    VIIIPlus,
-    IXMinus,
-    IX,
-    IXPlus,
+    ViMinus,
+    Vi,
+    ViPlus,
+    ViiMinus,
+    Vii,
+    ViiPlus,
+    ViiiMinus,
+    Viii,
+    ViiiPlus,
+    IxMinus,
+    Ix,
+    IxPlus,
     XMinus,
     X,
     XPlus,
-    XIMinus,
-    XI,
-    XIPlus,
-    XIIMinus,
-    XII,
-    XIIPlus,
+    XiMinus,
+    Xi,
+    XiPlus,
+    XiiMinus,
+    Xii,
+    XiiPlus,
 }
 impl std::fmt::Display for Uiaa {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Uiaa::I => write!(f, "I"),
-            Uiaa::II => write!(f, "II"),
-            Uiaa::III => write!(f, "III"),
-            Uiaa::IVMinus => write!(f, "IV-"),
-            Uiaa::IV => write!(f, "IV"),
-            Uiaa::IVPlus => write!(f, "IV+"),
+            Uiaa::Ii => write!(f, "II"),
+            Uiaa::Iii => write!(f, "III"),
+            Uiaa::IvMinus => write!(f, "IV-"),
+            Uiaa::Iv => write!(f, "IV"),
+            Uiaa::IvPlus => write!(f, "IV+"),
             Uiaa::VMinus => write!(f, "V-"),
             Uiaa::V => write!(f, "V"),
             Uiaa::VPlus => write!(f, "V+"),
-            Uiaa::VIMinus => write!(f, "VI-"),
-            Uiaa::VI => write!(f, "VI"),
-            Uiaa::VIPlus => write!(f, "VI+"),
-            Uiaa::VIIMinus => write!(f, "VII-"),
-            Uiaa::VII => write!(f, "VII"),
-            Uiaa::VIIPlus => write!(f, "VII+"),
-            Uiaa::VIIIMinus => write!(f, "VIII-"),
-            Uiaa::VIII => write!(f, "VIII"),
-            Uiaa::VIIIPlus => write!(f, "VIII+"),
-            Uiaa::IXMinus => write!(f, "IX-"),
-            Uiaa::IX => write!(f, "IX"),
-            Uiaa::IXPlus => write!(f, "IX+"),
+            Uiaa::ViMinus => write!(f, "VI-"),
+            Uiaa::Vi => write!(f, "VI"),
+            Uiaa::ViPlus => write!(f, "VI+"),
+            Uiaa::ViiMinus => write!(f, "VII-"),
+            Uiaa::Vii => write!(f, "VII"),
+            Uiaa::ViiPlus => write!(f, "VII+"),
+            Uiaa::ViiiMinus => write!(f, "VIII-"),
+            Uiaa::Viii => write!(f, "VIII"),
+            Uiaa::ViiiPlus => write!(f, "VIII+"),
+            Uiaa::IxMinus => write!(f, "IX-"),
+            Uiaa::Ix => write!(f, "IX"),
+            Uiaa::IxPlus => write!(f, "IX+"),
             Uiaa::XMinus => write!(f, "X-"),
             Uiaa::X => write!(f, "X"),
             Uiaa::XPlus => write!(f, "X+"),
-            Uiaa::XIMinus => write!(f, "XI-"),
-            Uiaa::XI => write!(f, "XI"),
-            Uiaa::XIPlus => write!(f, "XI+"),
-            Uiaa::XIIMinus => write!(f, "XII-"),
-            Uiaa::XII => write!(f, "XII"),
-            Uiaa::XIIPlus => write!(f, "XII+"),
+            Uiaa::XiMinus => write!(f, "XI-"),
+            Uiaa::Xi => write!(f, "XI"),
+            Uiaa::XiPlus => write!(f, "XI+"),
+            Uiaa::XiiMinus => write!(f, "XII-"),
+            Uiaa::Xii => write!(f, "XII"),
+            Uiaa::XiiPlus => write!(f, "XII+"),
         }
     }
 }
 
 
-#[derive(Debug, Copy, Clone, PartialEq, )]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum SendType {
     Redpoint, //Send after previous attempts/tops, no rests, lead or boulder (free) only
     Flash, //Completion on first attempt, with beta
