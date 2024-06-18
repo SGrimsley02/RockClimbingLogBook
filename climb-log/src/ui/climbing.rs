@@ -109,6 +109,7 @@ impl std::fmt::Display for Grade {
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Default)]
 pub enum Yosemite {
     One,
     Two,
@@ -123,6 +124,7 @@ pub enum Yosemite {
     FiveSix,
     FiveSeven,
     FiveEight,
+    #[default]
     FiveNine,
     FiveTenA,
     FiveTenB,
@@ -420,11 +422,6 @@ impl std::convert::From<String> for Yosemite {
             "5.15d" => Yosemite::FiveFifteenD,
             _ => Yosemite::FiveNine, //default to 5.9
         }
-    }
-}
-impl default::Default for Yosemite {
-    fn default() -> Yosemite {
-        Yosemite::FiveNine
     }
 }
 impl Yosemite {
@@ -926,11 +923,13 @@ impl std::fmt::Display for Uiaa {
 
 
 #[derive(Debug, Copy, Clone, PartialEq, )]
+#[derive(Default)]
 pub enum SendType {
     Redpoint, //Send after previous attempts/tops, no rests, lead or boulder (free) only
     Flash, //Completion on first attempt, with beta
     Onsight, //Completion on first attempt, without beta
     Pinkpoint, //Redpoint but on toprope or similar
+    #[default]
     Attempt, //No completion
     Top, //Completed but with takes/falls
     Repeat, //Repeat of a route
@@ -948,11 +947,6 @@ impl std::fmt::Display for SendType {
             SendType::Repeat => write!(f, "Repeat"),
             SendType::FreeSolo => write!(f, "Free Solo"),
         }
-    }
-}
-impl std::default::Default for SendType {
-    fn default() -> SendType {
-        SendType::Attempt
     }
 }
 impl SendType {

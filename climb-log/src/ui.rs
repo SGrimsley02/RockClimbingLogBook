@@ -305,7 +305,7 @@ impl MyApp {
                     #[allow(unused_variables)] //Location doesn't currently exist in the database
                     let location = self.route_options.location.clone();
                     #[allow(unused_variables)] //Grade is hardcoded for now
-                    let grade = self.route_options.grade.clone();
+                    let grade = self.route_options.grade;
                     let str_grade: String = format!("{}", grade);
                     
                     println!("UI Grade: {}", str_grade);
