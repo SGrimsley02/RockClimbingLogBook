@@ -538,7 +538,7 @@ impl MyApp {
             if ui.button("Add Send").clicked() {
                 //Add send to the session vector
                 self.session.push(self.send_options.clone());
-                let date = self.send_options.date.clone();
+                let date = self.send_options.date;
                 self.send_options = SendOptions::default();
                 self.send_options.date = date;
             }
