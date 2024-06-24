@@ -41,7 +41,7 @@ enum Page {
 #[derive(Default, Clone)]
 struct RouteOptions {
     name: String,
-    grade: climbing::Yosemite, //Defaulting to this for now
+    grade: FullGrade,
     boulder: bool,
     sport: bool,
     trad: bool,
@@ -175,35 +175,12 @@ impl MyApp {
         }
         ui.heading("Add Grade");
         ScrollArea::auto_sized().show(ui, |ui| {
-            
-
+            ui.label("Tall Wall Grade:");
             egui::ComboBox::from_label("Yosemite Grade")
                 .selected_text(format!("{}", self.add_grade.yosemite))
                 .show_ui(ui, |ui| {
                     Yosemite::iter().for_each(|grade| {
                         ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{}", grade));
-                    });
-                });
-            
-            ui.separator();
-            
-
-            egui::ComboBox::from_label("Hueco Grade")
-                .selected_text(format!("{}", self.add_grade.hueco))
-                .show_ui(ui, |ui| {
-                    Hueco::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
-                    });
-                });
-            
-            ui.separator();
-            
-
-            egui::ComboBox::from_label("Font Grade")
-                .selected_text(format!("{}", self.add_grade.font))
-                .show_ui(ui, |ui| {
-                    Font::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
                     });
                 });
             
@@ -227,12 +204,47 @@ impl MyApp {
                 });
             
             ui.separator();
-            if ui.button("Save").clicked() {
+            if ui.button("Save Tall Wall Grade").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
                 let grade = self.add_grade.clone();
                 rt.as_ref().as_ref().unwrap().spawn(async move {
-                    <RoutesDb as Clone>::clone(&db).add_grade(&grade.yosemite.to_string(), &grade.font.to_string(), &grade.french.to_string(), &grade.hueco.to_string(), &grade.uiaa.to_string()).await.expect("Error, could not add grade.");
+                    <RoutesDb as Clone>::clone(&db).add_grade(Some(grade.yosemite.to_string()), None, Some(grade.french.to_string()), None, Some(grade.uiaa.to_string())).await.expect("Error, could not add grade.");
+                });
+                self.reset();
+            }
+
+            ui.separator();
+
+            ui.label("Bouldering Grade:");
+
+            egui::ComboBox::from_label("Hueco Grade")
+                .selected_text(format!("{}", self.add_grade.hueco))
+                .show_ui(ui, |ui| {
+                    Hueco::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
+                    });
+                });
+            
+            ui.separator();
+            
+
+            egui::ComboBox::from_label("Font Grade")
+                .selected_text(format!("{}", self.add_grade.font))
+                .show_ui(ui, |ui| {
+                    Font::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
+                    });
+                });
+            
+            ui.separator();
+
+            if ui.button("Save Boulder Grade:").clicked() {
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                let grade = self.add_grade.clone();
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    <RoutesDb as Clone>::clone(&db).add_grade(None, Some(grade.font.to_string()), None, Some(grade.hueco.to_string()), None).await.expect("Error, could not add grade.");
                 });
                 self.reset();
             }
@@ -269,6 +281,16 @@ impl MyApp {
                 });
                 self.reset();
             }
+
+            ui.separator();
+
+            egui::ComboBox::from_label("Hueco Grade: ")
+                .selected_text(format!("{}", self.remove_grade.hueco))
+                .show_ui(ui, |ui| {
+                    Hueco::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.remove_grade.hueco, grade, format!("{}", grade));
+                    });
+                });
         })
     }
 
@@ -287,26 +309,38 @@ impl MyApp {
 
             ui.horizontal(|ui| {
                 ui.label("Style: ");
-                ui.checkbox(&mut self.route_options.boulder, "Boulder");
-                ui.checkbox(&mut self.route_options.sport, "Sport");
-                ui.checkbox(&mut self.route_options.trad, "Trad");
-                ui.checkbox(&mut self.route_options.aid, "Aid");
-                ui.checkbox(&mut self.route_options.ice, "Ice");
-                ui.checkbox(&mut self.route_options.alpine, "Alpine");
-                ui.checkbox(&mut self.route_options.top_rope, "Top Rope");
-                ui.checkbox(&mut self.route_options.free_solo, "Free Solo");
-                ui.checkbox(&mut self.route_options.deep_water, "Deep Water");
-                ui.checkbox(&mut self.route_options.speed, "Speed");
+                //Boulder or Tall Wall
+                ui.radio_value(&mut self.route_options.boulder, true, "Boulder");
+                ui.radio_value(&mut self.route_options.boulder, false, "Tall Wall");
+            });
+            ui.horizontal(|ui| { //Only show these options if it's a tall wall route
+                if !self.route_options.boulder {
+                    ui.checkbox(&mut self.route_options.sport, "Sport");
+                    ui.checkbox(&mut self.route_options.trad, "Trad");
+                    ui.checkbox(&mut self.route_options.aid, "Aid");
+                    ui.checkbox(&mut self.route_options.ice, "Ice");
+                    ui.checkbox(&mut self.route_options.alpine, "Alpine");
+                    ui.checkbox(&mut self.route_options.top_rope, "Top Rope");
+                    ui.checkbox(&mut self.route_options.free_solo, "Free Solo");
+                    ui.checkbox(&mut self.route_options.deep_water, "Deep Water");
+                    ui.checkbox(&mut self.route_options.speed, "Speed");
+                }
             });
 
             ui.separator();
 
             egui::ComboBox::from_label("Grade")
-                .selected_text(format!("{}", self.route_options.grade))
+                .selected_text(format!("{}", { if self.route_options.boulder { self.route_options.grade.hueco.to_string() } else { self.route_options.grade.yosemite.to_string() } }))
                 .show_ui(ui, |ui| {
-                    Yosemite::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.route_options.grade, grade, format!("{}", grade));
-                    });
+                    if self.route_options.boulder {
+                        Hueco::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.route_options.grade.hueco, grade, format!("{}", grade));
+                        });
+                    } else {
+                        Yosemite::iter().for_each(|grade| {
+                            ui.selectable_value(&mut self.route_options.grade.yosemite, grade, format!("{}", grade));
+                        });
+                    }
                 });
 
             ui.separator();
@@ -322,13 +356,16 @@ impl MyApp {
             });
             
             ui.separator();
-
+            if !self.route_options.boulder {
             ui.horizontal(|ui| {
-                ui.label("Pitches:");
-                ui.add(eframe::egui::widgets::DragValue::new(&mut self.route_options.pitches).speed(1.0));
-            });
+                    ui.label("Pitches:");
+                    ui.add(eframe::egui::widgets::DragValue::new(&mut self.route_options.pitches).speed(0.5));
+                });
 
-            ui.separator();
+                ui.separator();
+            } else {
+                self.route_options.pitches = 0;
+            }
 
             ui.horizontal(|ui| {
                 ui.label("Location:");
@@ -399,7 +436,7 @@ impl MyApp {
                     let location = self.route_options.location.clone();
                     #[allow(unused_variables)] //Grade is hardcoded for now
                     let grade = self.route_options.grade;
-                    let str_grade: String = format!("{}", grade);
+                    let str_grade: String = format!("{}", { if self.route_options.boulder { grade.hueco.to_string() } else { grade.yosemite.to_string() } });
                     
                     println!("UI Grade: {}", str_grade);
                     // Add the route to the database, starting async stuffe

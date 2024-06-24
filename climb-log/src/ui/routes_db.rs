@@ -53,7 +53,7 @@ impl RoutesDb {
         )
     }
 
-    pub async fn add_grade(self, yosemite: &str, font: &str, french: &str, hueco: &str, uiaa: &str) -> Result<(), DbErr> {
+    pub async fn add_grade(self, yosemite: Option<String>, font: Option<String>, french: Option<String>, hueco: Option<String>, uiaa: Option<String>) -> Result<(), DbErr> {
         let new_grade = grades::ActiveModel {
             yosemite: ActiveValue::Set(yosemite.to_owned()),
             font: ActiveValue::Set(font.to_owned()),
@@ -76,7 +76,10 @@ impl RoutesDb {
     }
 
     pub async fn get_grade_id(self, grd: &str) -> Result<i32, DbErr> {
-        let grade = Grades::find().filter(grades::Column::Yosemite.eq(grd)).one(&self.db).await?;
+        let mut grade = Grades::find().filter(grades::Column::Yosemite.eq(grd)).one(&self.db).await?;
+        if grade.is_none() {
+            grade = Grades::find().filter(grades::Column::Hueco.eq(grd)).one(&self.db).await?;
+        }
         // Return the id of the grade
         Ok(grade.unwrap().id)
     }

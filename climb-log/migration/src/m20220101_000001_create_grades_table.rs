@@ -26,11 +26,11 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Grades::Yosemite).string().not_null())
-                    .col(ColumnDef::new(Grades::Hueco).string().not_null())
-                    .col(ColumnDef::new(Grades::Font).string().not_null())
-                    .col(ColumnDef::new(Grades::French).string().not_null())
-                    .col(ColumnDef::new(Grades::Uiaa).string().not_null())
+                    .col(ColumnDef::new(Grades::Yosemite).string())
+                    .col(ColumnDef::new(Grades::Hueco).string())
+                    .col(ColumnDef::new(Grades::Font).string())
+                    .col(ColumnDef::new(Grades::French).string())
+                    .col(ColumnDef::new(Grades::Uiaa).string())
                     .to_owned(),
             )
             .await

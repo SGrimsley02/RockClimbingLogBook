@@ -107,7 +107,7 @@ impl std::fmt::Display for Grade {
     }
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct FullGrade {
     pub yosemite: Yosemite,
     pub font: Font,
