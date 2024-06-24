@@ -87,6 +87,7 @@ pub struct MyApp {
     cur_session: Arc<Mutex<Vec<SendModel>>>,
     view_session: Option<SendModel>,
     add_grade: FullGrade,
+    remove_grade: FullGrade,
 }
 
 impl MyApp {
@@ -109,6 +110,7 @@ impl MyApp {
             cur_session: Arc::new(Mutex::new(Vec::new())),
             view_session: None,
             add_grade: FullGrade::default(),
+            remove_grade: FullGrade::default(),
         }
     }
 
@@ -175,58 +177,65 @@ impl MyApp {
         ScrollArea::auto_sized().show(ui, |ui| {
             
 
-                egui::ComboBox::from_label("Yosemite Grade")
-                    .selected_text(format!("{}", self.add_grade.yosemite))
-                    .show_ui(ui, |ui| {
-                        Yosemite::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{}", grade));
-                        });
+            egui::ComboBox::from_label("Yosemite Grade")
+                .selected_text(format!("{}", self.add_grade.yosemite))
+                .show_ui(ui, |ui| {
+                    Yosemite::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{}", grade));
                     });
+                });
             
             ui.separator();
             
 
-                egui::ComboBox::from_label("Hueco Grade")
-                    .selected_text(format!("{}", self.add_grade.hueco))
-                    .show_ui(ui, |ui| {
-                        Hueco::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
-                        });
+            egui::ComboBox::from_label("Hueco Grade")
+                .selected_text(format!("{}", self.add_grade.hueco))
+                .show_ui(ui, |ui| {
+                    Hueco::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
                     });
+                });
             
             ui.separator();
             
 
-                egui::ComboBox::from_label("Font Grade")
-                    .selected_text(format!("{}", self.add_grade.font))
-                    .show_ui(ui, |ui| {
-                        Font::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
-                        });
+            egui::ComboBox::from_label("Font Grade")
+                .selected_text(format!("{}", self.add_grade.font))
+                .show_ui(ui, |ui| {
+                    Font::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
                     });
+                });
             
             ui.separator();
             
-                egui::ComboBox::from_label("French Grade")
-                    .selected_text(format!("{}", self.add_grade.french))
-                    .show_ui(ui, |ui| {
-                        French::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.add_grade.french, grade, format!("{}", grade));
-                        });
+            egui::ComboBox::from_label("French Grade")
+                .selected_text(format!("{}", self.add_grade.french))
+                .show_ui(ui, |ui| {
+                    French::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.french, grade, format!("{}", grade));
                     });
+                });
             
             ui.separator();
-            
-
-                egui::ComboBox::from_label("UIAA Grade")
-                    .selected_text(format!("{}", self.add_grade.uiaa))
-                    .show_ui(ui, |ui| {
-                        Uiaa::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.add_grade.uiaa, grade, format!("{}", grade));
-                        });
+            egui::ComboBox::from_label("UIAA Grade")
+                .selected_text(format!("{}", self.add_grade.uiaa))
+                .show_ui(ui, |ui| {
+                    Uiaa::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.add_grade.uiaa, grade, format!("{}", grade));
                     });
-                
+                });
             
+            ui.separator();
+            if ui.button("Save").clicked() {
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                let grade = self.add_grade.clone();
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    <RoutesDb as Clone>::clone(&db).add_grade(&grade.yosemite.to_string(), &grade.font.to_string(), &grade.french.to_string(), &grade.hueco.to_string(), &grade.uiaa.to_string()).await.expect("Error, could not add grade.");
+                });
+                self.reset();
+            }
         })
     }
 
@@ -235,6 +244,32 @@ impl MyApp {
             self.reset();
         }
         ui.heading("Remove Grade");
+
+        ScrollArea::auto_sized().show(ui, |ui| {
+            ui.label("Please select a grade to remove:");
+            ui.separator();
+            
+            egui::ComboBox::from_label("Yosemite Grade: ")
+                .selected_text(format!("{}", self.remove_grade.yosemite))
+                .show_ui(ui, |ui| {
+                    Yosemite::iter().for_each(|grade| {
+                        ui.selectable_value(&mut self.remove_grade.yosemite, grade, format!("{}", grade));
+                    });
+                });
+            
+            ui.separator();
+
+            if ui.button("Remove").clicked() {
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                let grade = self.remove_grade.yosemite.clone();
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    let grade_id = <RoutesDb as Clone>::clone(&db).get_grade_id(&grade.to_string()).await.expect("Error, could not get grade id.");
+                    <RoutesDb as Clone>::clone(&db).remove_grade(grade_id).await.expect("Error, could not remove grade.");
+                });
+                self.reset();
+            }
+        })
     }
 
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
