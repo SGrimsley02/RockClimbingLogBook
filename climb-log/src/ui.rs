@@ -133,9 +133,9 @@ impl MyApp {
                 ui.image(logo);
 
                 ui.heading("Ascent");
-                
             });
         });
+
         egui::SidePanel::left("Menu").show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.heading("Menu");
@@ -178,6 +178,7 @@ impl MyApp {
                 }
             });
         });
+        
         egui::CentralPanel::default().show(ctx, |ui| {
             // Home Page Content on right/central area
             ui.vertical(|ui| {
