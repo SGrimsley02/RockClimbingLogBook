@@ -1,25 +1,12 @@
 use std::sync::{Arc, Mutex, MutexGuard};
-//use std::thread;
+use tokio::runtime::Runtime;
 use itertools::Itertools;
+use eframe::{NativeOptions, run_native, egui, egui::{ScrollArea, CentralPanel}, epi::App};
 mod routes_db;
-//use eframe::egui::FontDefinitions;
-use eframe::egui::ScrollArea;
-use eframe::NativeOptions;
-use routes_db::RoutesDb;
-//use futures::executor::block_on;
+use routes_db::{RoutesDb, entities::{routes::Model as RouteModel, sends::Model as SendModel, grades::Model as GradeModel}};
 mod climbing;
 use climbing::*;
 
-
-use eframe::{run_native, egui::CentralPanel, epi::App};
-use eframe::egui;
-//use futures::future::FutureExt;
-//use sea_orm::DatabaseConnection;
-//use sea_orm::Database;
-use tokio::runtime::Runtime;
-use routes_db::entities::routes::Model as RouteModel;
-use routes_db::entities::sends::Model as SendModel;
-use routes_db::entities::grades::Model as GradeModel;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Page {
@@ -69,7 +56,6 @@ struct SendOptions {
     route_name: String,
     route: Option<RouteModel>,
 }
-
 
 pub struct MyApp {
     page: Page,
@@ -788,7 +774,6 @@ impl MyApp {
         self.view_session = None;
     }
 }
-
 
 impl App for MyApp {
     fn setup(&mut self, _context: &eframe::egui::CtxRef, _frame: &mut eframe::epi::Frame<'_>, _storage: Option<&dyn eframe::epi::Storage>) {
