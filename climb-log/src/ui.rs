@@ -7,8 +7,7 @@ use routes_db::{RoutesDb, entities::{routes::Model as RouteModel, sends::Model a
 mod climbing;
 use climbing::*;
 
-#[allow(deprecated)]
-use egui_extras::image::RetainedImage;
+
 
 
 
@@ -108,7 +107,6 @@ impl MyApp {
             remove_grade: FullGrade::default(),
             //#[allow(deprecated)]
             //logo: RetainedImage::from_image_bytes("AscentLogo.png", include_bytes!("AscentLogo.png")).unwrap(),
-            
         }
     }
 
@@ -117,7 +115,7 @@ impl MyApp {
         let app = MyApp::new(&rt).await;
         let win_option = NativeOptions::default(); //Using default options for now
         // Run
-        run_native(
+        let _ = run_native(
             "Ascent Climbing Log",
             win_option,
             Box::new(|_cc| Box::new(app)),
@@ -837,7 +835,10 @@ impl App for MyApp {
 
         });
         if self.should_quit {
-            frame.close();
+            let ctx = context.clone();
+            std::thread::spawn(move || {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            });
         }
     }
 
