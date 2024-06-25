@@ -231,14 +231,11 @@ impl RoutesDb {
         //self.clone().add_grade("5.1", "(0)", "1", "(VB)", "I").await?;
         //self.clone().add_grade("5.2", "(0)", "2", "(VB)", "II").await?;
         //self.clone().add_grade("5.0", "(0)", "1", "(VB)", "I").await?;
-        let grade_id: i32 = self.clone().get_grade_id("5.0").await?;
-        println!("Grade ID: {}", grade_id);
-
-        let session_id: i32 = self.clone().get_next_session_id().await?;
-        println!("Session ID: {}", session_id);
+        let _grade_id: i32 = self.clone().get_grade_id("5.0").await?;
         
 
-        println!("Successful refactor!");
+        let _session_id: i32 = self.clone().get_next_session_id().await?;
+        
 
         Ok(())
     }

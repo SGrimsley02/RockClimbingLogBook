@@ -441,7 +441,6 @@ impl MyApp {
                     let grade = self.route_options.grade;
                     let str_grade: String = format!("{}", { if self.route_options.boulder { grade.hueco.to_string() } else { grade.yosemite.to_string() } });
                     
-                    println!("UI Grade: {}", str_grade);
                     // Add the route to the database, starting async stuffe
                     let db = Arc::clone(&self.database);
                     let rt = Arc::clone(&self.rt);
@@ -528,7 +527,7 @@ impl MyApp {
 
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     let route = <RoutesDb as Clone>::clone(&db).find_route_name(&name).await.expect("Error, could not find route.");
-                    println!("{:?}", route);
+
                     let mut result_lock = search_result.lock().unwrap();
                     *result_lock = route;
                 });

@@ -49,7 +49,6 @@ async fn main() {
     }
     */
 
-    println!("\nEGUI User Interface:");
     
     
     MyApp::run().await;
