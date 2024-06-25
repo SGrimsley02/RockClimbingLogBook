@@ -79,8 +79,7 @@ pub struct MyApp {
     view_session: Option<SendModel>,
     add_grade: FullGrade,
     remove_grade: FullGrade,
-    //#[allow(deprecated)]
-    //logo: RetainedImage,
+    
 
 }
 
@@ -105,8 +104,7 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
-            //#[allow(deprecated)]
-            //logo: RetainedImage::from_image_bytes("AscentLogo.png", include_bytes!("AscentLogo.png")).unwrap(),
+            
         }
     }
 
@@ -131,13 +129,11 @@ impl MyApp {
             ui.horizontal(|ui| {
                 
                 //Display an image from the file AscentLogo.png
+                let logo = egui::include_image!("../assets/AscentLogo.png");
+                ui.image(logo);
 
-
-                
-                
-
-                
                 ui.heading("Ascent");
+                
             });
         });
         egui::SidePanel::left("Menu").show(ctx, |ui| {
@@ -815,6 +811,7 @@ impl App for MyApp {
     
     #[allow(unused_variables)]
     fn update(&mut self, context: &eframe::egui::Context, frame: &mut eframe::Frame) {
+        egui_extras::install_image_loaders(context);
         CentralPanel::default().show(context, |ui| {
             match self.page {
                 Page::Home => self.render_home(context),
