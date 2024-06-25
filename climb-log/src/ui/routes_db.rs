@@ -3,7 +3,7 @@ use sea_orm::*;
 pub mod entities;
 use entities::{prelude::*, *};
 
-const DATABASE_URL: &str = "sqlite:./sqlite.db?mode=rwc";
+const DATABASE_URL: &str = "sqlite:./src/routes_sql.db?mode=rwc";
 const DB_NAME: &str = "routes_db";
 
 #[derive(Clone)]
