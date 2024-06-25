@@ -1,11 +1,16 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 use tokio::runtime::Runtime;
 use itertools::Itertools;
-use eframe::{NativeOptions, run_native, egui, egui::{ScrollArea, CentralPanel}, epi::App};
+use eframe::{egui::{self, CentralPanel, ScrollArea}, App, run_native, NativeOptions};
 mod routes_db;
 use routes_db::{RoutesDb, entities::{routes::Model as RouteModel, sends::Model as SendModel, grades::Model as GradeModel}};
 mod climbing;
 use climbing::*;
+
+#[allow(deprecated)]
+use egui_extras::image::RetainedImage;
+
+
 
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -66,8 +71,8 @@ pub struct MyApp {
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
-    search_result: Arc<Mutex<Option<RouteModel>>>,
-    viewing: Option<RouteModel>,
+    search_result: Arc<Mutex<Option<(RouteModel, GradeModel)>>>,
+    viewing: Option<(RouteModel, GradeModel)>,
     send_options: SendOptions,
     session: Vec<SendOptions>,
     session_id: i32,
@@ -75,6 +80,8 @@ pub struct MyApp {
     view_session: Option<SendModel>,
     add_grade: FullGrade,
     remove_grade: FullGrade,
+    #[allow(deprecated)]
+    logo: RetainedImage,
 
 }
 
@@ -99,6 +106,8 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
+            #[allow(deprecated)]
+            logo: RetainedImage::from_image_bytes("AscentLogo.png", include_bytes!("AscentLogo.png")).unwrap(),
             
         }
     }
@@ -118,43 +127,69 @@ impl MyApp {
         }
     }
 
-
-    fn render_home(&mut self, ui: &mut eframe::egui::Ui) {
-        ScrollArea::auto_sized().show(ui, |ui| {
-            ui.heading("Climbing Log");
-            ui.colored_label(eframe::egui::Color32::RED, "Welcome to the climbing log!");
-            ui.label("Please select an option:");
-            
-            // All the buttons to go to other pages
+    fn render_home(&mut self, ctx: &eframe::egui::Context) {
+        egui::TopBottomPanel::top("Home Header").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                
+                //Display an image from the file AscentLogo.png
+
+
+                
+                
+
+                
+                ui.heading("Ascent");
+            });
+        });
+        egui::SidePanel::left("Menu").show(ctx, |ui| {
+            ui.vertical(|ui| {
+                ui.heading("Menu");
+                ui.add_space(15.0);
+                // All the buttons to go to other pages
                 if ui.button("Add Grade").clicked() {
                     self.page = Page::AddGrade;
                 }
-                else if ui.button("Remove Grade").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Remove Grade").clicked() {
                     self.page = Page::RemoveGrade;
                 }
-                else if ui.button("Add Route").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Add Route").clicked() {
                     self.page = Page::AddRoute;
                 }
-                else if ui.button("Remove Route").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Remove Route").clicked() {
                     self.page = Page::RemoveRoute;
                 }
-                else if ui.button("Search").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Search").clicked() {
                     self.page = Page::SearchHome;
                 } 
-                else if ui.button("Log Session").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Log Session").clicked() {
                     self.page = Page::LogSession;
                 }
-                else if ui.button("History").clicked() {
+                ui.add_space(10.0);
+                if ui.button("History").clicked() {
                     self.page = Page::History;
                 }
-                else if ui.button("Stats").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Stats").clicked() {
                     self.page = Page::Stats;
                 }
-                else if ui.button("Exit").clicked() {
+                ui.add_space(10.0);
+                if ui.button("Exit").clicked() {
                     self.page = Page::Exit;
                 }
             });
+        });
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // Home Page Content on right/central area
+            ui.vertical(|ui| {
+                ui.heading("Welcome to Ascent!");
+                ui.add_space(10.0);
+                //Text
+            })
         });
     }
 
@@ -163,7 +198,7 @@ impl MyApp {
             self.reset();
         }
         ui.heading("Add Grade");
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.label("Tall Wall Grade:");
             egui::ComboBox::from_label("Yosemite Grade")
                 .selected_text(format!("{}", self.add_grade.yosemite))
@@ -237,7 +272,7 @@ impl MyApp {
                 });
                 self.reset();
             }
-        })
+        });
     }
 
     fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
@@ -512,16 +547,16 @@ impl MyApp {
                 let search_result = Arc::clone(&self.search_result);
 
                 rt.as_ref().as_ref().unwrap().spawn(async move {
-                    let route = <RoutesDb as Clone>::clone(&db).find_route_name(&name).await.expect("Error, could not find route.");
+                    let (route, grade) = <RoutesDb as Clone>::clone(&db).find_route_and_grade(&name).await.expect("Error, could not find route.");
 
                     let mut result_lock = search_result.lock().unwrap();
-                    *result_lock = route;
+                    *result_lock = Some((route, grade));
                 });
             }
             ui.separator();
-            if let Some(route) = &*self.search_result.lock().unwrap() {
+            if let Some((route, grade)) = &*self.search_result.lock().unwrap() {
                 ui.label(format!("Name: {}", route.name));
-                ui.label(format!("Grade Id: {}", route.grade_id));
+                ui.label(format!("Grade Id: {}", { if route.pitches == 0 { grade.hueco.clone().unwrap().to_string() } else { grade.yosemite.clone().unwrap().to_string() } }));
                 ui.label(format!("Style: {}", route.style));
                 ui.label(format!("Length: {} ft", route.length));
                 ui.label(format!("Pitches: {}", route.pitches));
@@ -537,8 +572,8 @@ impl MyApp {
             self.reset();
         } else {
         ui.heading("View Route");
-        let view_route = self.viewing.clone().unwrap();
-        ui.label(format!("Grade Id: {}", view_route.grade_id));
+        let (view_route, view_grade) = self.viewing.clone().unwrap();
+        ui.label(format!("Grade Id: {}", { if view_route.pitches == 0 { view_grade.hueco.unwrap().to_string() } else { view_grade.yosemite.unwrap().to_string() } }));
         ui.label(format!("Style: {}", view_route.style));
         ui.label(format!("Length: {} ft", view_route.length));
         ui.label(format!("Pitches: {}", view_route.pitches));
@@ -569,7 +604,7 @@ impl MyApp {
                 ui.horizontal(|ui| {
                     ui.label(format!("Route {}: {}", i, route.name));
                     if ui.button("View").clicked() {
-                        self.viewing = Some(route.clone());
+                        self.viewing = Some((route.clone(), grade.clone()));
                         self.page = Page::ViewRoute;
                     }
                 });
@@ -776,17 +811,14 @@ impl MyApp {
 }
 
 impl App for MyApp {
-    fn setup(&mut self, _context: &eframe::egui::CtxRef, _frame: &mut eframe::epi::Frame<'_>, _storage: Option<&dyn eframe::epi::Storage>) {
-        //self.configure_fonts(context);
-        
-    }
+    
 
     
     #[allow(unused_variables)]
-    fn update(&mut self, context: &eframe::egui::CtxRef, frame: &mut eframe::epi::Frame<'_>) {
+    fn update(&mut self, context: &eframe::egui::CtxRef, frame: &mut eframe::Frame<'_>) {
         CentralPanel::default().show(context, |ui| {
             match self.page {
-                Page::Home => self.render_home(ui),
+                Page::Home => self.render_home(context),
                 Page::AddGrade => self.render_add_grade(ui),
                 Page::RemoveGrade => self.render_remove_grade(ui),
                 Page::AddRoute => self.render_add_route(ui),
@@ -808,7 +840,9 @@ impl App for MyApp {
         }
     }
 
+    /*
     fn name(&self) -> &str {
         "Climbing Log"
     }
+    */
 }
