@@ -80,8 +80,8 @@ pub struct MyApp {
     view_session: Option<SendModel>,
     add_grade: FullGrade,
     remove_grade: FullGrade,
-    #[allow(deprecated)]
-    logo: RetainedImage,
+    //#[allow(deprecated)]
+    //logo: RetainedImage,
 
 }
 
@@ -106,8 +106,8 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
-            #[allow(deprecated)]
-            logo: RetainedImage::from_image_bytes("AscentLogo.png", include_bytes!("AscentLogo.png")).unwrap(),
+            //#[allow(deprecated)]
+            //logo: RetainedImage::from_image_bytes("AscentLogo.png", include_bytes!("AscentLogo.png")).unwrap(),
             
         }
     }
@@ -118,8 +118,9 @@ impl MyApp {
         let win_option = NativeOptions::default(); //Using default options for now
         // Run
         run_native(
-            Box::new(app),
+            "Ascent Climbing Log",
             win_option,
+            Box::new(|_cc| Box::new(app)),
         );
 
         if let Some(runtime) = Arc::try_unwrap(rt).ok().and_then(|opt| opt) {
@@ -281,7 +282,7 @@ impl MyApp {
         }
         ui.heading("Remove Grade");
 
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.label("Please select a grade to remove:");
             ui.separator();
             
@@ -315,7 +316,7 @@ impl MyApp {
                         ui.selectable_value(&mut self.remove_grade.hueco, grade, format!("{}", grade));
                     });
                 });
-        })
+        });
     }
 
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
@@ -323,7 +324,7 @@ impl MyApp {
             self.reset();
         }
         ui.heading("Add Route");
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Name:");
                 ui.text_edit_singleline(&mut self.route_options.name);
@@ -478,7 +479,7 @@ impl MyApp {
                 }
                 
             }
-        })
+        });
     }
 
     fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
@@ -487,7 +488,7 @@ impl MyApp {
         }
         ui.heading("Remove Route");
         
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.label("Please select a route to remove:");
             ui.separator();
             ui.horizontal(|ui| {
@@ -532,7 +533,7 @@ impl MyApp {
         
         ui.heading("Find Route");
 
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.label("Please enter the name of the route:");
             ui.separator();
             ui.horizontal(|ui| {
@@ -588,7 +589,7 @@ impl MyApp {
         }
         ui.heading("All Routes");
         
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             let db = Arc::clone(&self.database);
             let rt = Arc::clone(&self.rt);
             let results = Arc::clone(&self.all_routes);
@@ -625,7 +626,7 @@ impl MyApp {
         }
         ui.heading("Log Session");
 
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             /*ui.horizontal(|ui| {
                 ui.label("Indoor or Outdoor?");
                 ui.radio_value(&mut self.route_options.indoor, true, "Indoor");
@@ -717,7 +718,7 @@ impl MyApp {
                 });
                 self.reset();
             }
-        })
+        });
     }
 
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
@@ -730,7 +731,7 @@ impl MyApp {
         // Display them all in a scroll area, backwards by session id (ie, most recent first)
         // Each session should have a button to view it in more detail
 
-        ScrollArea::auto_sized().show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Search: ");
                 ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
@@ -815,7 +816,7 @@ impl App for MyApp {
 
     
     #[allow(unused_variables)]
-    fn update(&mut self, context: &eframe::egui::CtxRef, frame: &mut eframe::Frame<'_>) {
+    fn update(&mut self, context: &eframe::egui::Context, frame: &mut eframe::Frame) {
         CentralPanel::default().show(context, |ui| {
             match self.page {
                 Page::Home => self.render_home(context),
@@ -836,7 +837,7 @@ impl App for MyApp {
 
         });
         if self.should_quit {
-            frame.quit();
+            frame.close();
         }
     }
 
