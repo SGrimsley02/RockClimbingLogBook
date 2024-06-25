@@ -19,6 +19,7 @@ use eframe::egui;
 use tokio::runtime::Runtime;
 use routes_db::entities::routes::Model as RouteModel;
 use routes_db::entities::sends::Model as SendModel;
+use routes_db::entities::grades::Model as GradeModel;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Page {
@@ -75,7 +76,7 @@ pub struct MyApp {
     route_options: RouteOptions,
     removal_name: String,
     find_name: String,
-    all_routes: Arc<Mutex<Vec<RouteModel>>>,
+    all_routes: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>,
     database: Arc<RoutesDb>,
     rt: Arc<Option<Runtime>>,
     should_quit: bool,
@@ -88,6 +89,7 @@ pub struct MyApp {
     view_session: Option<SendModel>,
     add_grade: FullGrade,
     remove_grade: FullGrade,
+
 }
 
 impl MyApp {
@@ -111,6 +113,7 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
+            
         }
     }
 
@@ -570,13 +573,13 @@ impl MyApp {
             let rt = Arc::clone(&self.rt);
             let results = Arc::clone(&self.all_routes);
             rt.as_ref().as_ref().unwrap().spawn(async move {
-                let routes = <RoutesDb as Clone>::clone(&db).find_all_routes().await.expect("Error, could not find all routes.");
+                let routes = <RoutesDb as Clone>::clone(&db.clone()).find_all_routes_and_grade().await.expect("Error, could not find all routes.");
                 let mut routes_guard = results.lock().unwrap();
                 *routes_guard = routes;
             });
             
-            let routes = self.all_routes.lock().unwrap();
-            for (i, route) in routes.iter().enumerate() {
+            let routes = self.all_routes.lock().unwrap().clone();
+            for (i, (route, grade)) in routes.iter().enumerate() {
                 
                 ui.horizontal(|ui| {
                     ui.label(format!("Route {}: {}", i, route.name));
@@ -585,8 +588,8 @@ impl MyApp {
                         self.page = Page::ViewRoute;
                     }
                 });
+                ui.label(format!("Grade: {}", if route.pitches == 0 { grade.clone().hueco.unwrap().to_string() } else { grade.clone().yosemite.unwrap().to_string() }));
                 
-                ui.label(format!("Grade Id: {}", route.grade_id));
                 ui.label(format!("Style: {}", route.style));
                 ui.label(format!("Length: {} ft", route.length));
                 ui.label(format!("Pitches: {}", route.pitches));

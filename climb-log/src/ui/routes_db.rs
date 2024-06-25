@@ -173,6 +173,23 @@ impl RoutesDb {
         Ok(all_routes)
     }
 
+    pub async fn find_route_and_grade(self, name: &str) -> Result<(routes::Model, grades::Model), DbErr> {
+        let route = self.clone().find_route_name(name).await?;
+        let route = route.unwrap();
+        let grade = self.clone().get_grade(route.grade_id as u16).await?;
+        Ok((route, grade))
+    }
+
+    pub async fn find_all_routes_and_grade(self) -> Result<Vec<(routes::Model, grades::Model)>, DbErr> {
+        let all_routes = self.clone().find_all_routes().await?;
+        let mut all_routes_and_grades: Vec<(routes::Model, grades::Model)> = Vec::new();
+        for route in all_routes {
+            let grade = self.clone().get_grade(route.grade_id as u16).await?;
+            all_routes_and_grades.push((route, grade));
+        }
+        Ok(all_routes_and_grades)
+    }
+
     pub async fn run_db(self) -> Result<(), DbErr> { //Currently using this mostly just to test some features
         // Connect to the database
 
