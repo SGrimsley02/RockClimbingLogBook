@@ -84,7 +84,7 @@ impl RoutesDb {
         Ok(grade.unwrap().id)
     }
 
-    pub async fn get_grade(self, id: u16) -> Result<grades::Model, DbErr> {
+    pub async fn get_grade(self, id: i32) -> Result<grades::Model, DbErr> {
         let grade = Grades::find_by_id(id as i32).one(&self.db).await?;
         Ok(grade.unwrap())
     }
@@ -125,6 +125,24 @@ impl RoutesDb {
         Ok(session)
     }
 
+    async fn remove_send(self, id: i32, session: i32) -> Result<(), DbErr> {
+
+        let delete_send = sends::ActiveModel {
+            id: ActiveValue::Set(id),
+            session: ActiveValue::Set(session),
+            ..Default::default()
+        };
+        delete_send.delete(&self.db).await?;
+        Ok(())
+    }
+
+    pub async fn remove_session(self, id: i32) -> Result<(), DbErr> {
+        let session = self.clone().get_session(id).await?;
+        for send in session {
+            self.clone().remove_send(send.id, send.session).await?;
+        }
+        Ok(())
+    }
 
     pub async fn get_next_session_id(self) -> Result<i32, DbErr> {
         // Get the highest session id
@@ -176,7 +194,7 @@ impl RoutesDb {
     pub async fn find_route_and_grade(self, name: &str) -> Result<(routes::Model, grades::Model), DbErr> {
         let route = self.clone().find_route_name(name).await?;
         let route = route.unwrap();
-        let grade = self.clone().get_grade(route.grade_id as u16).await?;
+        let grade = self.clone().get_grade(route.grade_id).await?;
         Ok((route, grade))
     }
 
@@ -184,7 +202,7 @@ impl RoutesDb {
         let all_routes = self.clone().find_all_routes().await?;
         let mut all_routes_and_grades: Vec<(routes::Model, grades::Model)> = Vec::new();
         for route in all_routes {
-            let grade = self.clone().get_grade(route.grade_id as u16).await?;
+            let grade = self.clone().get_grade(route.grade_id).await?;
             all_routes_and_grades.push((route, grade));
         }
         Ok(all_routes_and_grades)

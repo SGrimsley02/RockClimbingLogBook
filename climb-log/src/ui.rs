@@ -13,7 +13,7 @@ use climbing::*;
 
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-enum Page {
+enum Page { // All the possible pages for the app to display
     Home,
     AddGrade,
     RemoveGrade,
@@ -24,6 +24,7 @@ enum Page {
     ViewRoute,
     ViewAllRoutes,
     LogSession,
+    RemoveSession,
     ViewSession,
     History,
     Stats,
@@ -31,7 +32,7 @@ enum Page {
 }
 
 #[derive(Default, Clone)]
-struct RouteOptions {
+struct RouteOptions { // All the info needed to add a route
     name: String,
     grade: FullGrade,
     boulder: bool,
@@ -48,10 +49,11 @@ struct RouteOptions {
     length: u16,
     pitches: u8,
     location: String,
+    //notes: String,
 }
 
 #[derive(Default, Clone)]
-struct SendOptions {
+struct SendOptions { // All the info needed to log a send
     date: Date,
     partner: String,
     send_type: SendType,
@@ -61,32 +63,32 @@ struct SendOptions {
     route: Option<RouteModel>,
 }
 
-pub struct MyApp {
-    page: Page,
-    route_options: RouteOptions,
-    removal_name: String,
-    find_name: String,
-    all_routes: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>,
-    database: Arc<RoutesDb>,
-    rt: Arc<Option<Runtime>>,
-    should_quit: bool,
-    search_result: Arc<Mutex<Option<(RouteModel, GradeModel)>>>,
-    viewing: Option<(RouteModel, GradeModel)>,
-    send_options: SendOptions,
-    session: Vec<SendOptions>,
-    session_id: i32,
-    cur_session: Arc<Mutex<Vec<SendModel>>>,
-    view_session: Option<SendModel>,
-    add_grade: FullGrade,
-    remove_grade: FullGrade,
+pub struct MyApp { // The main app struct
+    page: Page, // Current page to display
+    route_options: RouteOptions, // Options for adding a route
+    removal_name: String, // Name of route to remove
+    find_name: String, // Name of route to find
+    all_routes: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>, // All routes in the database, in an async context
+    database: Arc<RoutesDb>, // Database through RoutesDb
+    rt: Arc<Option<Runtime>>, // Runtime for async stuff
+    should_quit: bool, // Quit flag
+    search_result: Arc<Mutex<Option<(RouteModel, GradeModel)>>>, // Result of a single search, async context
+    viewing: Option<(RouteModel, GradeModel)>, // Route to view in more detail, out of the async
+    send_options: SendOptions, // Options for logging a send
+    session: Vec<SendOptions>, // All sends in a session
+    session_id: i32, // Session id to search for
+    cur_session: Arc<Mutex<Vec<SendModel>>>, // Current session to view, async context
+    view_session: Option<SendModel>, // Session to view in more detail, out of the async
+    add_grade: FullGrade, // Grade to add, with options for all types
+    remove_grade: FullGrade, // Grade to remove, with options for all types
     
 
 }
 
 impl MyApp {
 
-    pub async fn new(rt: &Arc<Option<Runtime>>) -> Self {
-        MyApp {
+    pub async fn new(rt: &Arc<Option<Runtime>>) -> Self { // Create a new app
+        MyApp { // Initialize all fields
             page: Page::Home,
             route_options: RouteOptions::default(),
             removal_name: String::new(),
@@ -104,11 +106,10 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
-            
         }
     }
 
-    pub async fn run(){
+    pub async fn run(){ // Run the app, can call using MyApp::run().await; and will create from scratch
         let rt = Arc::new(Some(Runtime::new().unwrap())); // Set up async runtime to be able to communicate w/ db
         let app = MyApp::new(&rt).await;
         let win_option = NativeOptions::default(); //Using default options for now
@@ -118,12 +119,13 @@ impl MyApp {
             win_option,
             Box::new(|_cc| Box::new(app)),
         );
-
+        // Shutdown the runtime when quitting
         if let Some(runtime) = Arc::try_unwrap(rt).ok().and_then(|opt| opt) {
             runtime.shutdown_background();
         }
     }
 
+    // Render functions for each page
     fn render_home(&mut self, ctx: &eframe::egui::Context) {
         egui::TopBottomPanel::top("Home Header").show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -132,10 +134,11 @@ impl MyApp {
                 let logo = egui::include_image!("../assets/AscentLogo.png");
                 ui.image(logo);
 
-                ui.heading("Ascent");
+                ui.heading("Ascent Climbing Log");
             });
         });
 
+        // Menu on the left
         egui::SidePanel::left("Menu").show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.heading("Menu");
@@ -165,6 +168,10 @@ impl MyApp {
                     self.page = Page::LogSession;
                 }
                 ui.add_space(10.0);
+                if ui.button("Remove Session").clicked() {
+                    self.page = Page::RemoveSession;
+                }
+                ui.add_space(10.0);
                 if ui.button("History").clicked() {
                     self.page = Page::History;
                 }
@@ -178,13 +185,16 @@ impl MyApp {
                 }
             });
         });
-        
+
+        // Home page content in central area
         egui::CentralPanel::default().show(ctx, |ui| {
             // Home Page Content on right/central area
             ui.vertical(|ui| {
                 ui.heading("Welcome to Ascent!");
+                ui.separator();
                 ui.add_space(10.0);
                 //Text
+                ui.label("Ascent is a climbing log application designed to help you keep track of your climbing sessions. You can add and remove grades, routes, and log your climbing sessions. You can also search for routes and view your climbing history. To get started, use the menu on the left to navigate to the desired page.");
             })
         });
     }
@@ -291,7 +301,7 @@ impl MyApp {
             
             ui.separator();
 
-            if ui.button("Remove").clicked() {
+            if ui.button("Remove Tall Wall Grade").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
                 let grade = self.remove_grade.yosemite.clone();
@@ -311,6 +321,19 @@ impl MyApp {
                         ui.selectable_value(&mut self.remove_grade.hueco, grade, format!("{}", grade));
                     });
                 });
+            
+            ui.separator();
+
+            if ui.button("Remove Boulder Grade").clicked() {
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                let grade = self.remove_grade.hueco.clone();
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    let grade_id = <RoutesDb as Clone>::clone(&db).get_grade_id(&grade.to_string()).await.expect("Error, could not get grade id.");
+                    <RoutesDb as Clone>::clone(&db).remove_grade(grade_id).await.expect("Error, could not remove grade.");
+                });
+                self.reset();
+            }
         });
     }
 
@@ -716,6 +739,32 @@ impl MyApp {
         });
     }
 
+    fn render_delete_session(&mut self, ui: &mut eframe::egui::Ui) {
+        if ui.button("Back").clicked() {
+            self.reset();
+        }
+        ui.heading("Delete Session");
+        
+        ScrollArea::vertical().show(ui, |ui| {
+            ui.label("Please enter the session id to delete:");
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("Session Id:");
+                ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
+            });
+            ui.separator();
+            if ui.button("Delete").clicked() {
+                let session_id = self.session_id;
+                let db = Arc::clone(&self.database);
+                let rt = Arc::clone(&self.rt);
+                rt.as_ref().as_ref().unwrap().spawn(async move {
+                    <RoutesDb as Clone>::clone(&db).remove_session(session_id).await.expect("Error, could not remove session.");
+                });
+                self.reset();
+            }
+        });
+    }
+
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -803,14 +852,15 @@ impl MyApp {
         self.session = Vec::new();
         self.cur_session = Arc::new(Mutex::new(Vec::new()));
         self.view_session = None;
+        self.add_grade = FullGrade::default();
+        self.remove_grade = FullGrade::default();
+        self.session_id = 0;
     }
 }
 
 impl App for MyApp {
     
-
-    
-    #[allow(unused_variables)]
+    #[allow(unused_variables)] //frame is needed for update but not being used for anything
     fn update(&mut self, context: &eframe::egui::Context, frame: &mut eframe::Frame) {
         egui_extras::install_image_loaders(context);
         CentralPanel::default().show(context, |ui| {
@@ -825,6 +875,7 @@ impl App for MyApp {
                 Page::ViewRoute => self.render_view_route(ui),
                 Page::ViewAllRoutes => self.render_all_routes(ui),
                 Page::LogSession => self.render_log_session(ui),
+                Page::RemoveSession => self.render_delete_session(ui),
                 Page::ViewSession => self.render_view_session(ui),
                 Page::History => self.render_history(ui),
                 Page::Stats => self.render_stats(ui),
@@ -840,9 +891,4 @@ impl App for MyApp {
         }
     }
 
-    /*
-    fn name(&self) -> &str {
-        "Climbing Log"
-    }
-    */
 }
