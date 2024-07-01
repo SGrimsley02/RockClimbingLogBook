@@ -54,7 +54,7 @@ struct RouteOptions { // All the info needed to add a route
 
 #[derive(Default, Clone)]
 struct SendOptions { // All the info needed to log a send
-    date: Date,
+    date: sea_orm::prelude::Date,
     partner: String,
     send_type: SendType,
     attempts: u8,
@@ -658,14 +658,7 @@ impl MyApp {
                 let send = &mut self.session[index];
 
                 ui.group(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Date (mm/dd/yyyy): ");
-                        ui.add(egui::DragValue::new(&mut send.date.month).speed(1.0).clamp_range(1..=12));
-                        ui.label("/");
-                        ui.add(egui::DragValue::new(&mut send.date.day).speed(1.0).clamp_range(1..=31));
-                        ui.label("/");
-                        ui.add(egui::DragValue::new(&mut send.date.year).speed(1.0).clamp_range(2000..=3000));
-                    });
+                    ui.add(egui_extras::DatePickerButton::new(&mut send.date));
 
                     ui.separator();
 
@@ -716,9 +709,7 @@ impl MyApp {
                 });
                 ui.separator();
             }
-            //TODO: Add a dropdown to select from multiple routes with same name when needed
-                //Along with this, make it so if a route is not found, it can be added from here
-            //TODO: When beautifying, make it easier to add multiple routes at once
+            //TODO: Make route search more of a search instead of just typing in the name
 
             if let Some(index) = to_remove {
                 self.session.remove(index);
