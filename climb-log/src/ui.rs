@@ -88,7 +88,7 @@ pub struct MyApp { // The main app struct
 impl MyApp {
 
     pub async fn new(rt: &Arc<Option<Runtime>>) -> Self { // Create a new app
-        MyApp { // Initialize all fields
+        let mut app = MyApp { // Initialize all fields
             page: Page::Home,
             route_options: RouteOptions::default(),
             removal_name: String::new(),
@@ -106,7 +106,9 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
-        }
+        };
+        app.session.push(SendOptions::default());
+        app
     }
 
     pub async fn run(){ // Run the app, can call using MyApp::run().await; and will create from scratch
@@ -651,68 +653,80 @@ impl MyApp {
                 ui.radio_value(&mut self.route_options.indoor, false, "Outdoor");
             }); */ //Not implemented for indoor yet- outdoor is actually simpler at the moment. Indoor likely needs its own table
             // ui.separator();
-            
-            ui.horizontal(|ui| {
-                ui.label("Date (mm/dd/yyyy): ");
-                ui.add(egui::DragValue::new(&mut self.send_options.date.month).speed(1.0).clamp_range(1..=12));
-                ui.label("/");
-                ui.add(egui::DragValue::new(&mut self.send_options.date.day).speed(1.0).clamp_range(1..=31));
-                ui.label("/");
-                ui.add(egui::DragValue::new(&mut self.send_options.date.year).speed(1.0).clamp_range(2000..=3000));
-            });
+            let mut to_remove = None;
+            for index in 0..self.session.len() {
+                let send = &mut self.session[index];
 
-            ui.separator();
-
-            ui.horizontal(|ui| {
-                ui.label("Partner:");
-                ui.text_edit_singleline(&mut self.send_options.partner);
-            });
-
-            ui.separator();
-
-            ui.horizontal(|ui| {
-                egui::ComboBox::from_label("Send Type")
-                    .selected_text(format!("{}", self.send_options.send_type))
-                    .show_ui(ui, |ui| {
-                        SendType::iter().for_each(|send_type| {
-                            ui.selectable_value(&mut self.send_options.send_type, send_type, format!("{}", send_type));
-                        });
+                ui.group(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Date (mm/dd/yyyy): ");
+                        ui.add(egui::DragValue::new(&mut send.date.month).speed(1.0).clamp_range(1..=12));
+                        ui.label("/");
+                        ui.add(egui::DragValue::new(&mut send.date.day).speed(1.0).clamp_range(1..=31));
+                        ui.label("/");
+                        ui.add(egui::DragValue::new(&mut send.date.year).speed(1.0).clamp_range(2000..=3000));
                     });
-            });
 
-            ui.separator();
+                    ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label("Attempts:");
-                ui.add(eframe::egui::widgets::DragValue::new(&mut self.send_options.attempts).speed(1.0));
-            });
+                    ui.horizontal(|ui| {
+                        ui.label("Partner:");
+                        ui.text_edit_singleline(&mut send.partner);
+                    });
 
-            ui.separator();
+                    ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label("Notes:");
-                ui.text_edit_multiline(&mut self.send_options.notes);
-            });
+                    ui.horizontal(|ui| {
+                        ui.label("Send Type: ");
+                        egui::ComboBox::from_id_source(index)
+                            .selected_text(format!("{}", send.send_type))
+                            .show_ui(ui, |ui| {
+                                SendType::iter().for_each(|send_type| {
+                                    ui.selectable_value(&mut send.send_type, send_type, format!("{}", send_type));
+                                });
+                            });
+                    });
 
-            ui.separator();
+                    ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label("Route:");
-                ui.text_edit_singleline(&mut self.send_options.route_name);
-            });
+                    ui.horizontal(|ui| {
+                        ui.label("Attempts:");
+                        ui.add(eframe::egui::widgets::DragValue::new(&mut send.attempts).speed(1.0));
+                    });
 
-            ui.separator();
+                    ui.separator();
 
+                    ui.horizontal(|ui| {
+                        ui.label("Notes:");
+                        ui.text_edit_multiline(&mut send.notes);
+                    });
+
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Route:");
+                        ui.text_edit_singleline(&mut send.route_name);
+                    });
+
+                    ui.separator();
+                
+                    if ui.button("Remove").clicked() {
+                        to_remove = Some(index);
+                    }
+                });
+                ui.separator();
+            }
             //TODO: Add a dropdown to select from multiple routes with same name when needed
                 //Along with this, make it so if a route is not found, it can be added from here
             //TODO: When beautifying, make it easier to add multiple routes at once
 
+            if let Some(index) = to_remove {
+                self.session.remove(index);
+            }
+
             if ui.button("Add Send").clicked() {
-                //Add send to the session vector
-                self.session.push(self.send_options.clone());
-                let date = self.send_options.date;
-                self.send_options = SendOptions::default();
-                self.send_options.date = date;
+                //Add a new send to the form
+                self.session.push(SendOptions::default());
             }
 
             if ui.button("Log Session").clicked() {
@@ -850,6 +864,7 @@ impl MyApp {
         self.viewing = None;
         self.send_options = SendOptions::default();
         self.session = Vec::new();
+        self.session.push(SendOptions::default());
         self.cur_session = Arc::new(Mutex::new(Vec::new()));
         self.view_session = None;
         self.add_grade = FullGrade::default();
