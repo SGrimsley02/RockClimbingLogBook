@@ -116,7 +116,7 @@ pub struct FullGrade {
     pub uiaa: Uiaa,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, PartialOrd)]
 pub enum Yosemite {
     One,
     Two,
@@ -476,7 +476,7 @@ impl Yosemite {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, PartialOrd)]
 pub enum Font {
     OneMinus,
     One,
@@ -647,7 +647,7 @@ impl Font {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, PartialOrd)]
 pub enum Hueco { //V Scale
     Vb,
     V0Minus,
@@ -830,7 +830,7 @@ impl Hueco {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, PartialOrd)]
 pub enum French { //5a, 6a+-, etc.
     One,
     Two,
@@ -1029,7 +1029,7 @@ impl French {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, PartialOrd)]
 pub enum Uiaa {
     I,
     Ii,
