@@ -848,6 +848,136 @@ impl MyApp {
             self.reset();
         }
         ui.heading("Stats");
+
+        /* Stats to Display:
+            - Total number of sends
+            - Total number of sessions
+            - Average number of sends per session
+            - Average number of attempts per send
+            - Average grade
+            - Favorite climbing style
+            - Favorite Route
+            - Favorite Partner
+            - Favorite Crag (location)
+            - Flash Grade (80% chance of flashing)
+            - Redpoint Grade (80% chance of sending in one session)
+            - Top Tall Wall Grade (& route)
+            - Top Boulder Grade (& route)
+            - Scan notes for some more stats (would have to be done with some sort of ai or very complex regex)
+        Other notes:
+            This is a place to really get creative with stats and displays.
+            Should have lots of fun stuff to look at like graphs, charts, graphics, etc.
+         */
+        ui.vertical(|ui| {
+            self.render_stats_content(ui);
+        });
+    }
+
+    fn render_stats_content(&self, ui: &mut eframe::egui::Ui) {
+        ui.label(format!("Total Sends: {}", self.total_sends()));
+        ui.label(format!("Total Sessions: {}", self.total_sessions()));
+        ui.label(format!("Average Sends per Session: {}", self.avg_sends()));
+        ui.label(format!("Average Attempts per Send: {}", self.avg_attempts()));
+        ui.label(format!("Average Tall Wall Grade: {}", self.avg_tall_grade()));
+        ui.label(format!("Average Boulder Grade: {}", self.avg_boulder_grade()));
+        ui.label(format!("Favorite Style: {}", self.fav_style()));
+        ui.label(format!("Favorite Route: {}", self.fav_route()));
+        ui.label(format!("Favorite Partner: {}", self.fav_partner()));
+        ui.label(format!("Favorite Crag: {}", self.fav_crag()));
+        ui.label(format!("Flash Grade (Tall Wall): {}", self.flash_grade_tall()));
+        ui.label(format!("Flash Grade (Boulder): {}", self.flash_grade_boulder()));
+        ui.label(format!("Redpoint Grade (Tall Wall): {}", self.redpoint_grade_tall()));
+        ui.label(format!("Redpoint Grade (Boulder): {}", self.redpoint_grade_boulder()));
+        let (tall_grade, tall_route) = self.top_tall_grade();
+        let (boulder_grade, boulder_route) = self.top_boulder_grade();
+        ui.label(format!("Top Tall Wall Grade: {} ({})", tall_grade, tall_route));
+        ui.label(format!("Top Boulder Grade: {} ({})", boulder_grade, boulder_route));
+        ui.label(format!("Other Stats: {}", self.other_stats()));
+    }
+
+    fn total_sends(&self) -> i32 {
+        // Get the total number of sends
+        0
+    }
+
+    fn total_sessions(&self) -> i32 {
+        // Get the total number of sessions
+        0
+    }
+
+    fn avg_sends(&self) -> f32 {
+        // Get the average number of sends per session
+        0.0
+    }
+
+    fn avg_attempts(&self) -> f32 {
+        // Get the average number of attempts per send
+        0.0
+    }
+
+    fn avg_tall_grade(&self) -> Yosemite {
+        // Get the average tall wall grade
+        Yosemite::FiveEight
+    }
+
+    fn avg_boulder_grade(&self) -> Hueco {
+        // Get the average boulder grade
+        Hueco::V0
+    }
+
+    fn fav_style(&self) -> Style {
+        // Get the favorite climbing style
+        Style::Boulder
+    }
+
+    fn fav_route(&self) -> String {
+        // Get the favorite route
+        "Route".to_string()
+    }
+
+    fn fav_partner(&self) -> String {
+        // Get the favorite partner
+        "Partner".to_string()
+    }
+
+    fn fav_crag(&self) -> String {
+        // Get the favorite crag
+        "Crag".to_string()
+    }
+
+    fn flash_grade_tall(&self) -> Yosemite {
+        // Get the flash grade for tall walls
+        Yosemite::FiveEight
+    }
+
+    fn flash_grade_boulder(&self) -> Hueco {
+        // Get the flash grade for bouldering
+        Hueco::V0
+    }
+
+    fn redpoint_grade_tall(&self) -> Yosemite {
+        // Get the redpoint grade
+        Yosemite::FiveEight
+    }
+
+    fn redpoint_grade_boulder(&self) -> Hueco {
+        // Get the redpoint grade for bouldering
+        Hueco::V0
+    }
+
+    fn top_tall_grade(&self) -> (Yosemite, String) {
+        // Get the top tall wall grade
+        (Yosemite::FiveTwelveB, "Hard Route".to_string())
+    }
+
+    fn top_boulder_grade(&self) -> (Hueco, String) {
+        // Get the top boulder grade
+        (Hueco::V6, "Hard Boulder".to_string())
+    }
+
+    fn other_stats(&self) -> String {
+        // Get other stats from notes
+        "Other Stats".to_string()
     }
 
     fn render_exit(&mut self, ui: &mut eframe::egui::Ui) {
