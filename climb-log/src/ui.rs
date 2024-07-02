@@ -82,6 +82,8 @@ pub struct MyApp { // The main app struct
     view_session: Option<SendModel>, // Session to view in more detail, out of the async
     add_grade: FullGrade, // Grade to add, with options for all types
     remove_grade: FullGrade, // Grade to remove, with options for all types
+    all_sessions_buffer: Arc<Mutex<Vec<SendModel>>>, // All sessions in the database, in an async context
+    all_sessions: Vec<SendModel>, // All sessions in the database, out of the async
 }
 
 impl MyApp {
@@ -105,6 +107,8 @@ impl MyApp {
             view_session: None,
             add_grade: FullGrade::default(),
             remove_grade: FullGrade::default(),
+            all_sessions_buffer: Arc::new(Mutex::new(Vec::new())),
+            all_sessions: Vec::new(),
         };
         app.session.push(SendOptions::default());
         app
@@ -867,7 +871,21 @@ impl MyApp {
         Other notes:
             This is a place to really get creative with stats and displays.
             Should have lots of fun stuff to look at like graphs, charts, graphics, etc.
+            But before all of that, have to actually get all the relevant info to calculate the stats.
          */
+
+        // Get the sends info
+        let db = Arc::clone(&self.database);
+        let rt = Arc::clone(&self.rt);
+        let all_sessions = Arc::clone(&self.all_sessions_buffer);
+        rt.as_ref().as_ref().unwrap().spawn(async move {
+            let sessions = <RoutesDb as Clone>::clone(&db).get_all_sends().await.expect("Error, could not get all sessions.");
+            let mut sessions_guard = all_sessions.lock().unwrap();
+            *sessions_guard = sessions;
+        });
+        self.all_sessions = self.all_sessions_buffer.lock().unwrap().clone();
+
+        // Display the stats
         ui.vertical(|ui| {
             self.render_stats_content(ui);
         });
@@ -897,51 +915,70 @@ impl MyApp {
 
     fn total_sends(&self) -> i32 {
         // Get the total number of sends
-        0
+        self.all_sessions.len() as i32
     }
 
     fn total_sessions(&self) -> i32 {
-        // Get the total number of sessions
-        0
+        // Get the total number of sessions (Currently just the highest id, but logic should be changed to get the number of unique ids)
+        self.all_sessions.iter().map(|session| session.session).max().unwrap_or(0)
     }
 
     fn avg_sends(&self) -> f32 {
         // Get the average number of sends per session
-        0.0
+        self.total_sends() as f32 / self.total_sessions() as f32
     }
 
     fn avg_attempts(&self) -> f32 {
         // Get the average number of attempts per send
-        0.0
+        self.all_sessions.iter().map(|session| session.attempts).sum::<i32>() as f32 / self.total_sends() as f32
     }
 
     fn avg_tall_grade(&self) -> Yosemite {
         // Get the average tall wall grade
         Yosemite::FiveEight
+        // In order to get the grade, first have to get the routes from the sends, then the grades from the routes
     }
 
     fn avg_boulder_grade(&self) -> Hueco {
         // Get the average boulder grade
         Hueco::V0
+        // See note for avg tall grade
     }
 
     fn fav_style(&self) -> Style {
         // Get the favorite climbing style
         Style::Boulder
+        // Have to get the routes for this, then the styles from the routes
     }
 
     fn fav_route(&self) -> String {
         // Get the favorite route
         "Route".to_string()
+        // Have to get the routes for this, then the names from the routes
     }
 
     fn fav_partner(&self) -> String {
         // Get the favorite partner
-        "Partner".to_string()
+        let partners = self.all_sessions.iter().map(|session| session.partner.clone().unwrap_or("Solo".to_string()));
+        let mut partner_map = std::collections::HashMap::new();
+        for partner in partners {
+            let count = partner_map.entry(partner).or_insert(0);
+            *count += 1;
+        }
+        let mut max = 0;
+        let mut fav = "Solo".to_string();
+        for (partner, count) in partner_map {
+            if count > max {
+                max = count;
+                fav = partner;
+            }
+        }
+        fav
     }
 
     fn fav_crag(&self) -> String {
         // Get the favorite crag
+        // Need to fix the location stuff in the database first
         "Crag".to_string()
     }
 
@@ -1010,6 +1047,8 @@ impl MyApp {
         self.add_grade = FullGrade::default();
         self.remove_grade = FullGrade::default();
         self.session_id = 0;
+        self.all_sessions_buffer = Arc::new(Mutex::new(Vec::new()));
+        self.all_sessions = Vec::new();
     }
 }
 

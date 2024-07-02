@@ -125,6 +125,11 @@ impl RoutesDb {
         Ok(session)
     }
 
+    pub async fn get_all_sends(self) -> Result<Vec<sends::Model>, DbErr> {
+        let all_sends = Sends::find().all(&self.db).await?;
+        Ok(all_sends)
+    }
+
     async fn remove_send(self, id: i32, session: i32) -> Result<(), DbErr> {
 
         let delete_send = sends::ActiveModel {
