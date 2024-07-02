@@ -55,13 +55,13 @@ struct RouteOptions { // All the info needed to add a route
 
 #[derive(Default, Clone)]
 struct SendOptions { // All the info needed to log a send
-    date: sea_orm::prelude::Date,
-    partner: String,
-    send_type: SendType,
-    attempts: i32,
-    notes: String,
-    route_name: String,
-    route: Option<RouteModel>,
+    date: sea_orm::prelude::Date, //EGUI works really well with sea_orm's Date type so just using that
+    partner: String, // Partner's name, optional (but does not need to have an Option)
+    send_type: SendType, // Type of send
+    attempts: i32, // Number of attempts, i32 bc that's what sea_orm/sqlite uses
+    notes: String, // Any notes
+    route_name: String, // Name of route, should match with a route in database
+    route: Option<RouteModel>, // Route from database, fetched for the user
 }
 
 pub struct MyApp { // The main app struct
@@ -82,8 +82,6 @@ pub struct MyApp { // The main app struct
     view_session: Option<SendModel>, // Session to view in more detail, out of the async
     add_grade: FullGrade, // Grade to add, with options for all types
     remove_grade: FullGrade, // Grade to remove, with options for all types
-    
-
 }
 
 impl MyApp {
@@ -128,8 +126,8 @@ impl MyApp {
         }
     }
 
-    // Render functions for each page
-    fn render_home(&mut self, ctx: &eframe::egui::Context) {
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
+    fn render_home(&mut self, ctx: &eframe::egui::Context) { // Render functions for each page
         egui::TopBottomPanel::top("Home Header").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 
@@ -202,6 +200,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         if ui.button("Back").clicked() {
             self.reset();
@@ -284,6 +283,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
         if ui.button("Back").clicked() {
             self.reset();
@@ -340,7 +340,7 @@ impl MyApp {
         });
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -503,6 +503,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
         if ui.button("Back").clicked() {
             self.reset();
@@ -532,6 +533,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_search_home(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -547,6 +549,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -589,6 +592,7 @@ impl MyApp {
         }
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -604,6 +608,7 @@ impl MyApp {
         }
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -641,6 +646,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -745,6 +751,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_delete_session(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -752,6 +759,7 @@ impl MyApp {
         ui.heading("Delete Session");
         
         ScrollArea::vertical().show(ui, |ui| {
+            // Still no good search so just doing this for now
             ui.label("Please enter the session id to delete:");
             ui.separator();
             ui.horizontal(|ui| {
@@ -760,6 +768,7 @@ impl MyApp {
             });
             ui.separator();
             if ui.button("Delete").clicked() {
+                // Async delete session
                 let session_id = self.session_id;
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
@@ -771,7 +780,9 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
+        // Display sessions in a scroll area
         if ui.button("Back").clicked() {
             self.reset();
         }
@@ -782,13 +793,13 @@ impl MyApp {
         // Each session should have a button to view it in more detail
 
         ScrollArea::vertical().show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.horizontal(|ui| { //Still don't have a good search so just doing this for now
                 ui.label("Search: ");
                 ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
             });
 
             ui.separator();
-
+            // Get all sessions thru async
             let db = Arc::clone(&self.database);
             let rt = Arc::clone(&self.rt);
             let results = Arc::clone(&self.cur_session);
@@ -800,6 +811,7 @@ impl MyApp {
             });
 
             let sessions: MutexGuard<Vec<SendModel>> = self.cur_session.lock().unwrap();
+            // Display all sessions
             for session in sessions.iter() {
                 ui.horizontal(|ui| {
                     ui.label(format!("Session {}: ", session.session));
@@ -820,14 +832,18 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_view_session(&mut self, ui: &mut eframe::egui::Ui) {
+        // Display info for a single session
         if ui.button("Back").clicked() {
             self.reset();
         }
         ui.heading("View Session");
     }
 
+    #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
     fn render_stats(&mut self, ui: &mut eframe::egui::Ui) {
+        // Display a variety of stats for the user
         if ui.button("Back").clicked() {
             self.reset();
         }
@@ -835,6 +851,7 @@ impl MyApp {
     }
 
     fn render_exit(&mut self, ui: &mut eframe::egui::Ui) {
+        // Quit confirmation page
         ui.heading("Are you sure you'd like to exit?");
         ui.horizontal(|ui| {
             if ui.button("Yes").clicked() {
@@ -847,6 +864,7 @@ impl MyApp {
     }
 
     fn reset(&mut self) {
+        // Reset all meaningful fields to default
         self.page = Page::Home;
         self.route_options = RouteOptions::default();
         self.removal_name = String::new();
@@ -869,6 +887,7 @@ impl App for MyApp {
     
     #[allow(unused_variables)] //frame is needed for update but not being used for anything
     fn update(&mut self, context: &eframe::egui::Context, frame: &mut eframe::Frame) {
+        // Control function to move between pages. Also adds the image loaders
         egui_extras::install_image_loaders(context);
         CentralPanel::default().show(context, |ui| {
             match self.page {
@@ -888,12 +907,12 @@ impl App for MyApp {
                 Page::Stats => self.render_stats(ui),
                 Page::Exit => self.render_exit(ui),
             }
-
         });
+        // Safe quit
         if self.should_quit {
             let ctx = context.clone();
             std::thread::spawn(move || {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             });
         }
     }
