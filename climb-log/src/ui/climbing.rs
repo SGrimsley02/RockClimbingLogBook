@@ -5,12 +5,12 @@ pub struct Route {
     pub name: String,
     pub grade: Grade,
     pub style: Vec<Style>,
-    pub length: u16,
-    pub pitches: u8,
+    pub length: i32,
+    pub pitches: i32,
     pub location: String,
 }
 impl Route {
-    pub fn new(name: String, grade: Grade, style: Vec<Style>, length: u16, pitches: u8, location: String) -> Route {
+    pub fn new(name: String, grade: Grade, style: Vec<Style>, length: i32, pitches: i32, location: String) -> Route {
         Route {
             name,
             grade,
@@ -42,15 +42,15 @@ impl std::fmt::Display for Route {
 #[derive(Debug, Clone)]
 pub struct Send {
     pub route: Route,
-    pub date: Date,
+    pub date: sea_orm::prelude::Date,
     pub partner: String,
-    pub attempts: u8,
-    pub send_type: SendType,
+    pub attempts: i32,
+    pub s_type: SendType,
     pub notes: String,
 }
 impl std::fmt::Display for Send {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} on {} with {} on {}", self.send_type, self.route, self.partner, self.date)
+        write!(f, "{} on {} with {} on {}", self.s_type, self.route, self.partner, self.date)
     }
 }
 
@@ -98,11 +98,11 @@ pub enum Grade {
 impl std::fmt::Display for Grade {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Grade::Yosemite(grade) => write!(f, "{}", grade),
-            Grade::Font(grade) => write!(f, "{}", grade),
-            Grade::Hueco(grade) => write!(f, "{}", grade),
-            Grade::French(grade) => write!(f, "{}", grade),
-            Grade::Uiaa(grade) => write!(f, "{}", grade),
+            Grade::Yosemite(grade) => write!(f, "{grade}"),
+            Grade::Font(grade) => write!(f, "{grade}"),
+            Grade::Hueco(grade) => write!(f, "{grade}"),
+            Grade::French(grade) => write!(f, "{grade}"),
+            Grade::Uiaa(grade) => write!(f, "{grade}"),
         }
     }
 }
@@ -938,6 +938,7 @@ impl std::convert::From<Yosemite> for French {
             Yosemite::Two => French::One,
             Yosemite::Three => French::One,
             Yosemite::Four => French::One,
+            Yosemite::FiveZero => French::One,
             Yosemite::FiveOne => French::One,
             Yosemite::FiveTwo => French::One,
             Yosemite::FiveThree => French::Two,
@@ -1177,14 +1178,3 @@ impl SendType {
 
 }
 
-#[derive(Debug, Copy, Clone, Default)]
-pub struct Date {
-    pub year: u16,
-    pub month: u8,
-    pub day: u8,
-}
-impl std::fmt::Display for Date {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}/{}", self.month, self.day, self.year)
-    }
-}

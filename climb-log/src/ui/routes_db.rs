@@ -1,7 +1,7 @@
 //use futures::executor::block_on;
-use sea_orm::*;
+use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, ConnectionTrait, Database, DatabaseConnection, DbBackend, DbErr, EntityTrait, LoaderTrait, QueryFilter, QueryOrder, Statement};
 pub mod entities;
-use entities::{prelude::*, *};
+use entities::{prelude::*, grades, routes, sends};
 
 const DATABASE_URL: &str = "sqlite:./src/routes_sql.db?mode=rwc";
 const DB_NAME: &str = "routes_db";
@@ -21,26 +21,26 @@ impl RoutesDb {
             DbBackend::MySql => {
                 db.execute(Statement::from_string(
                     db.get_database_backend(),
-                    format!("CREATE DATABASE IF NOT EXISTS `{}`;", DB_NAME),
+                    format!("CREATE DATABASE IF NOT EXISTS `{DB_NAME}`;"),
                 ))
                 .await?;
             
-                let url = format!("{}/{}", DATABASE_URL, DB_NAME);
+                let url = format!("{DATABASE_URL}/{DB_NAME}");
                 Database::connect(&url).await?
             }
             DbBackend::Postgres => {
                 db.execute(Statement::from_string(
                     db.get_database_backend(),
-                    format!("DROP DATABASE IF EXISTS \"{}\";", DB_NAME),
+                    format!("DROP DATABASE IF EXISTS \"{DB_NAME}\";"),
                 ))
                 .await?;
                 db.execute(Statement::from_string(
                     db.get_database_backend(),
-                    format!("CREATE DATABASE \"{}\";", DB_NAME),
+                    format!("CREATE DATABASE \"{DB_NAME}\";"),
                 ))
                 .await?;
             
-                let url = format!("{}/{}", DATABASE_URL, DB_NAME);
+                let url = format!("{DATABASE_URL}/{DB_NAME}");
                 Database::connect(&url).await?
             }
             DbBackend::Sqlite => db,
@@ -55,11 +55,11 @@ impl RoutesDb {
 
     pub async fn add_grade(self, yosemite: Option<String>, font: Option<String>, french: Option<String>, hueco: Option<String>, uiaa: Option<String>) -> Result<(), DbErr> {
         let new_grade = grades::ActiveModel {
-            yosemite: ActiveValue::Set(yosemite.to_owned()),
-            font: ActiveValue::Set(font.to_owned()),
-            french: ActiveValue::Set(french.to_owned()),
-            hueco: ActiveValue::Set(hueco.to_owned()),
-            uiaa: ActiveValue::Set(uiaa.to_owned()),
+            yosemite: ActiveValue::Set(yosemite.clone()),
+            font: ActiveValue::Set(font.clone()),
+            french: ActiveValue::Set(french.clone()),
+            hueco: ActiveValue::Set(hueco.clone()),
+            uiaa: ActiveValue::Set(uiaa.clone()),
             ..Default::default()
         };
         Grades::insert(new_grade).exec(&self.db).await?;
@@ -85,17 +85,17 @@ impl RoutesDb {
     }
 
     pub async fn get_grade(self, id: i32) -> Result<grades::Model, DbErr> {
-        let grade = Grades::find_by_id(id as i32).one(&self.db).await?;
+        let grade = Grades::find_by_id(id).one(&self.db).await?;
         Ok(grade.unwrap())
     }
 
     #[allow(clippy::too_many_arguments)]
     pub async fn add_route(self, name: String, length: i32, pitches: i32, style: String, grade_id: i32) -> Result<(), DbErr> {
         let new_route = routes::ActiveModel {
-            name: ActiveValue::Set(name.to_owned()),
+            name: ActiveValue::Set(name.clone()),
             length: ActiveValue::Set(length),
             pitches: ActiveValue::Set(pitches),
-            style: ActiveValue::Set(style.to_owned()),
+            style: ActiveValue::Set(style.clone()),
             grade_id: ActiveValue::Set(grade_id),
             ..Default::default()
         };
@@ -107,11 +107,11 @@ impl RoutesDb {
     pub async fn add_send(self, session: i32, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
         let new_send = sends::ActiveModel {
             session: ActiveValue::Set(session),
-            date: ActiveValue::Set(date.to_owned()),
-            partner: ActiveValue::Set(partner.to_owned()),
-            r#type: ActiveValue::Set(send_type.to_owned()),
+            date: ActiveValue::Set(date.clone()),
+            partner: ActiveValue::Set(partner.clone()),
+            r#type: ActiveValue::Set(send_type.clone()),
             attempts: ActiveValue::Set(attempts),
-            notes: ActiveValue::Set(notes.to_owned()),
+            notes: ActiveValue::Set(notes.clone()),
             route: ActiveValue::Set(self.clone().get_route_id(&route.name).await.unwrap().to_owned()),
             ..Default::default()
         };

@@ -5,7 +5,7 @@ use eframe::{egui::{self, CentralPanel, ScrollArea}, App, run_native, NativeOpti
 mod routes_db;
 use routes_db::{RoutesDb, entities::{routes::Model as RouteModel, sends::Model as SendModel, grades::Model as GradeModel}};
 mod climbing;
-use climbing::*;
+use climbing::{Font, French, FullGrade, Hueco, SendType, Style, Uiaa, Yosemite};
 
 
 
@@ -31,6 +31,7 @@ enum Page { // All the possible pages for the app to display
     Exit,
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Default, Clone)]
 struct RouteOptions { // All the info needed to add a route
     name: String,
@@ -46,8 +47,8 @@ struct RouteOptions { // All the info needed to add a route
     deep_water: bool,
     speed: bool,
     length_buffer: String,
-    length: u16,
-    pitches: u8,
+    length: i32,
+    pitches: i32,
     location: String,
     //notes: String,
 }
@@ -57,7 +58,7 @@ struct SendOptions { // All the info needed to log a send
     date: sea_orm::prelude::Date,
     partner: String,
     send_type: SendType,
-    attempts: u8,
+    attempts: i32,
     notes: String,
     route_name: String,
     route: Option<RouteModel>,
@@ -212,7 +213,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.add_grade.yosemite))
                 .show_ui(ui, |ui| {
                     Yosemite::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.add_grade.yosemite, grade, format!("{grade}"));
                     });
                 });
             
@@ -222,7 +223,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.add_grade.french))
                 .show_ui(ui, |ui| {
                     French::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.french, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.add_grade.french, grade, format!("{grade}"));
                     });
                 });
             
@@ -231,7 +232,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.add_grade.uiaa))
                 .show_ui(ui, |ui| {
                     Uiaa::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.uiaa, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.add_grade.uiaa, grade, format!("{grade}"));
                     });
                 });
             
@@ -239,7 +240,7 @@ impl MyApp {
             if ui.button("Save Tall Wall Grade").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
-                let grade = self.add_grade.clone();
+                let grade = self.add_grade;
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     <RoutesDb as Clone>::clone(&db).add_grade(Some(grade.yosemite.to_string()), None, Some(grade.french.to_string()), None, Some(grade.uiaa.to_string())).await.expect("Error, could not add grade.");
                 });
@@ -254,7 +255,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.add_grade.hueco))
                 .show_ui(ui, |ui| {
                     Hueco::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.add_grade.hueco, grade, format!("{grade}"));
                     });
                 });
             
@@ -265,7 +266,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.add_grade.font))
                 .show_ui(ui, |ui| {
                     Font::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.add_grade.font, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.add_grade.font, grade, format!("{grade}"));
                     });
                 });
             
@@ -274,7 +275,7 @@ impl MyApp {
             if ui.button("Save Boulder Grade:").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
-                let grade = self.add_grade.clone();
+                let grade = self.add_grade;
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     <RoutesDb as Clone>::clone(&db).add_grade(None, Some(grade.font.to_string()), None, Some(grade.hueco.to_string()), None).await.expect("Error, could not add grade.");
                 });
@@ -297,7 +298,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.remove_grade.yosemite))
                 .show_ui(ui, |ui| {
                     Yosemite::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.remove_grade.yosemite, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.remove_grade.yosemite, grade, format!("{grade}"));
                     });
                 });
             
@@ -306,7 +307,7 @@ impl MyApp {
             if ui.button("Remove Tall Wall Grade").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
-                let grade = self.remove_grade.yosemite.clone();
+                let grade = self.remove_grade.yosemite;
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     let grade_id = <RoutesDb as Clone>::clone(&db).get_grade_id(&grade.to_string()).await.expect("Error, could not get grade id.");
                     <RoutesDb as Clone>::clone(&db).remove_grade(grade_id).await.expect("Error, could not remove grade.");
@@ -320,7 +321,7 @@ impl MyApp {
                 .selected_text(format!("{}", self.remove_grade.hueco))
                 .show_ui(ui, |ui| {
                     Hueco::iter().for_each(|grade| {
-                        ui.selectable_value(&mut self.remove_grade.hueco, grade, format!("{}", grade));
+                        ui.selectable_value(&mut self.remove_grade.hueco, grade, format!("{grade}"));
                     });
                 });
             
@@ -329,7 +330,7 @@ impl MyApp {
             if ui.button("Remove Boulder Grade").clicked() {
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
-                let grade = self.remove_grade.hueco.clone();
+                let grade = self.remove_grade.hueco;
                 rt.as_ref().as_ref().unwrap().spawn(async move {
                     let grade_id = <RoutesDb as Clone>::clone(&db).get_grade_id(&grade.to_string()).await.expect("Error, could not get grade id.");
                     <RoutesDb as Clone>::clone(&db).remove_grade(grade_id).await.expect("Error, could not remove grade.");
@@ -339,6 +340,7 @@ impl MyApp {
         });
     }
 
+    #[allow(clippy::too_many_lines)]
     fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
         if ui.button("Back").clicked() {
             self.reset();
@@ -375,15 +377,15 @@ impl MyApp {
             ui.separator();
 
             egui::ComboBox::from_label("Grade")
-                .selected_text(format!("{}", { if self.route_options.boulder { self.route_options.grade.hueco.to_string() } else { self.route_options.grade.yosemite.to_string() } }))
+                .selected_text({ if self.route_options.boulder { self.route_options.grade.hueco.to_string() } else { self.route_options.grade.yosemite.to_string() } }.to_string())
                 .show_ui(ui, |ui| {
                     if self.route_options.boulder {
                         Hueco::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.route_options.grade.hueco, grade, format!("{}", grade));
+                            ui.selectable_value(&mut self.route_options.grade.hueco, grade, format!("{grade}"));
                         });
                     } else {
                         Yosemite::iter().for_each(|grade| {
-                            ui.selectable_value(&mut self.route_options.grade.yosemite, grade, format!("{}", grade));
+                            ui.selectable_value(&mut self.route_options.grade.yosemite, grade, format!("{grade}"));
                         });
                     }
                 });
@@ -393,23 +395,22 @@ impl MyApp {
             ui.horizontal(|ui| {
                 ui.label("Length (ft):");
                 ui.text_edit_singleline(&mut self.route_options.length_buffer);
-                if let Ok(length) = self.route_options.length_buffer.parse::<u16>() {
-                    self.route_options.length = length;
+                if let Ok(length) = self.route_options.length_buffer.parse::<u16>() { //Use u16 to prevent negative numbers
+                    self.route_options.length = i32::from(length); //Convert to i32 for database
                 } else {
                     ui.label("Invalid length, please enter a number.");
                 }
             });
             
             ui.separator();
-            if !self.route_options.boulder {
-            ui.horizontal(|ui| {
+            if self.route_options.boulder {
+                self.route_options.pitches = 0;
+            } else {
+                ui.horizontal(|ui| {
                     ui.label("Pitches:");
                     ui.add(eframe::egui::widgets::DragValue::new(&mut self.route_options.pitches).speed(0.5));
                 });
-
                 ui.separator();
-            } else {
-                self.route_options.pitches = 0;
             }
 
             ui.horizontal(|ui| {
@@ -473,15 +474,15 @@ impl MyApp {
                     }
 
                     // Clone everything to pass to the async block
-                    let style_str = style.iter().map(|s| s.to_string()).join(", ");
+                    let style_str = style.iter().map(std::string::ToString::to_string).join(", ");
                     let name = self.route_options.name.clone();
-                    let length = self.route_options.length.into();
-                    let pitches = self.route_options.pitches.into();
+                    let length = self.route_options.length;
+                    let pitches = self.route_options.pitches;
                     #[allow(unused_variables)] //Location doesn't currently exist in the database
                     let location = self.route_options.location.clone();
                     #[allow(unused_variables)] //Grade is hardcoded for now
                     let grade = self.route_options.grade;
-                    let str_grade: String = format!("{}", { if self.route_options.boulder { grade.hueco.to_string() } else { grade.yosemite.to_string() } });
+                    let str_grade: String = { if self.route_options.boulder { grade.hueco.to_string() } else { grade.yosemite.to_string() } }.to_string();
                     
                     // Add the route to the database, starting async stuffe
                     let db = Arc::clone(&self.database);
@@ -675,7 +676,7 @@ impl MyApp {
                             .selected_text(format!("{}", send.send_type))
                             .show_ui(ui, |ui| {
                                 SendType::iter().for_each(|send_type| {
-                                    ui.selectable_value(&mut send.send_type, send_type, format!("{}", send_type));
+                                    ui.selectable_value(&mut send.send_type, send_type, format!("{send_type}"));
                                 });
                             });
                     });
@@ -729,13 +730,13 @@ impl MyApp {
                     
                     
                     let session_id = <RoutesDb as Clone>::clone(&db).get_next_session_id().await.expect("Error, could not get next session id.");
-                    for send in sends.iter() {
+                    for send in &sends {
                         let find_name = send.route_name.clone();
                         let partner = if send.partner.is_empty() { None } else { Some(send.partner.clone()) };
                         let notes = if send.notes.is_empty() { None } else { Some(send.notes.clone()) };
                         let route = <RoutesDb as Clone>::clone(&db).find_route_name(&find_name).await.expect("Error, could not find route.");
                         let route = route.unwrap();
-                        <RoutesDb as Clone>::clone(&db).add_send(session_id, route, send.date.to_string(), partner, send.send_type.to_string(), send.attempts as i32, notes).await.expect("Error, could not log session.");
+                        <RoutesDb as Clone>::clone(&db).add_send(session_id, route, send.date.to_string(), partner, send.send_type.to_string(), send.attempts, notes).await.expect("Error, could not log session.");
                     }
                     
                 });
