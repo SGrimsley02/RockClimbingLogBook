@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::{collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
 use tokio::runtime::Runtime;
 use itertools::Itertools;
 use eframe::{egui::{self, CentralPanel, ScrollArea}, App, run_native, NativeOptions};
 mod routes_db;
-use routes_db::{RoutesDb, entities::{routes::Model as RouteModel, sends::Model as SendModel, grades::Model as GradeModel}};
+use routes_db::{entities::{grades::Model as GradeModel, routes::Model as RouteModel, sends::Model as SendModel}, RoutesDb};
 mod climbing;
 use climbing::{Font, French, FullGrade, Hueco, SendType, Style, Uiaa, Yosemite};
 
@@ -84,6 +84,8 @@ pub struct MyApp { // The main app struct
     remove_grade: FullGrade, // Grade to remove, with options for all types
     all_sessions_buffer: Arc<Mutex<Vec<SendModel>>>, // All sessions in the database, in an async context
     all_sessions: Vec<SendModel>, // All sessions in the database, out of the async
+    routes_w_grades_buffer: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>, // All grades in the database, in an async context
+    routes_w_grades: Vec<(RouteModel, GradeModel)>, // All grades in the database, out of the async
 }
 
 impl MyApp {
@@ -109,6 +111,8 @@ impl MyApp {
             remove_grade: FullGrade::default(),
             all_sessions_buffer: Arc::new(Mutex::new(Vec::new())),
             all_sessions: Vec::new(),
+            routes_w_grades_buffer: Arc::new(Mutex::new(Vec::new())),
+            routes_w_grades: Vec::new(),
         };
         app.session.push(SendOptions::default());
         app
@@ -885,7 +889,23 @@ impl MyApp {
         });
         self.all_sessions = self.all_sessions_buffer.lock().unwrap().clone();
 
+        
+        let db = Arc::clone(&self.database);
+        let rt = Arc::clone(&self.rt);
+        let all_routes_w_grades = Arc::clone(&self.routes_w_grades_buffer);
+        rt.as_ref().as_ref().unwrap().spawn(async move {
+            let routes = <RoutesDb as Clone>::clone(&db).find_all_routes_and_grade().await.expect("Error, could not find all routes.");
+            let mut routes_guard = all_routes_w_grades.lock().unwrap();
+            *routes_guard = routes;
+        });
+        self.routes_w_grades = self.routes_w_grades_buffer.lock().unwrap().clone();
+
         // Display the stats
+        if self.all_sessions.is_empty() || self.routes_w_grades.is_empty() {
+            // Change this to a loading circle at some point
+            ui.label("Loading...");
+            return;
+        }
         ui.vertical(|ui| {
             self.render_stats_content(ui);
         });
@@ -920,7 +940,16 @@ impl MyApp {
 
     fn total_sessions(&self) -> i32 {
         // Get the total number of sessions (Currently just the highest id, but logic should be changed to get the number of unique ids)
-        self.all_sessions.iter().map(|session| session.session).max().unwrap_or(0)
+        let mut total_sessions: Vec<i32> = Vec::new();
+        for session in &self.all_sessions {
+            if total_sessions.contains(&session.session) {
+                continue;
+            } else {
+                total_sessions.push(session.session);
+            }
+        }
+
+        total_sessions.len() as i32
     }
 
     fn avg_sends(&self) -> f32 {
@@ -935,26 +964,90 @@ impl MyApp {
 
     fn avg_tall_grade(&self) -> Yosemite {
         // Get the average tall wall grade
-        Yosemite::FiveEight
-        // In order to get the grade, first have to get the routes from the sends, then the grades from the routes
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches == 0 {
+                continue;
+            }
+            routes_and_grades.push(route);
+        }
+
+        let mut grade_sum = 0;
+        for (_route, grade) in &routes_and_grades {
+            grade_sum += Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
+        }
+        let grade_num = (grade_sum / routes_and_grades.len() as i32) as i32;
+        Yosemite::from(grade_num)
+
     }
 
     fn avg_boulder_grade(&self) -> Hueco {
         // Get the average boulder grade
-        Hueco::V0
-        // See note for avg tall grade
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches != 0 {
+                continue;
+            }
+            routes_and_grades.push(route);
+        }
+
+        let mut grade_sum = 0;
+        for (_, grade) in &routes_and_grades {
+            grade_sum += Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1; // For some reason this needs to be -1, not sure why but it fixes everything here
+        }
+        let grade_num = grade_sum / routes_and_grades.len() as i32;
+        Hueco::from(grade_num)
     }
 
-    fn fav_style(&self) -> Style {
+    fn fav_style(&self) -> String {
         // Get the favorite climbing style
-        Style::Boulder
-        // Have to get the routes for this, then the styles from the routes
+        
+        let mut routes: Vec<RouteModel> = Vec::new();
+        for session in &self.all_sessions {
+            let route = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().0.clone();
+            routes.push(route);
+        }
+        let mut style_map = std::collections::HashMap::new();
+        for route in routes {
+            let count = style_map.entry(route.style.clone()).or_insert(0);
+            *count += 1;
+        }
+        let mut max = 0;
+        let mut fav = String::new();
+        for (style, count) in style_map {
+            if count > max {
+                max = count;
+                fav = style;
+            }
+        }
+        fav
     }
 
     fn fav_route(&self) -> String {
         // Get the favorite route
-        "Route".to_string()
-        // Have to get the routes for this, then the names from the routes
+        let mut routes: Vec<RouteModel> = Vec::new();
+        for session in &self.all_sessions {
+            let route = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().0.clone();
+            routes.push(route);
+        }
+        let mut route_map = std::collections::HashMap::new();
+        for route in routes {
+            let count = route_map.entry(route.name.clone()).or_insert(0);
+            *count += 1;
+        }
+        let mut max = 0;
+        let mut fav = String::new();
+        for (route, count) in route_map {
+            if count > max {
+                max = count;
+                fav = route;
+            }
+        }
+        fav
     }
 
     fn fav_partner(&self) -> String {
@@ -984,37 +1077,193 @@ impl MyApp {
 
     fn flash_grade_tall(&self) -> Yosemite {
         // Get the flash grade for tall walls
-        Yosemite::FiveEight
+        // Flash grade = hardest grade you can send first try 80% of the time
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel, SendModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches == 0 {
+                continue;
+            }
+            routes_and_grades.push((route.0, route.1, session.clone()));
+        }
+
+        // flash_map is a hashmap of the grade and (non-flashed, flashed) sends
+        let mut flash_map: HashMap<GradeModel, (i32, i32)> = std::collections::HashMap::new();
+        for (_route, grade, session) in &routes_and_grades {
+            let count = flash_map.entry(grade.clone()).or_insert((0, 0));
+            if session.attempts == 1 {
+                count.1 += 1;
+            } else if session.r#type != "Repeat" {
+                count.0 += 1;
+            }
+        }
+        let mut max_grade = -2;
+        for (grade, (non_flashed, flashed)) in flash_map {
+            if flashed as f32 / (flashed + non_flashed) as f32 >= 0.8 {
+                let grade_num = Yosemite::from(grade.yosemite.clone().unwrap());
+                if grade_num as i32 > max_grade {
+                    max_grade = grade_num as i32;
+                }
+            }
+        }
+        Yosemite::from(max_grade)
+
     }
 
     fn flash_grade_boulder(&self) -> Hueco {
         // Get the flash grade for bouldering
-        Hueco::V0
+        // Flash grade = hardest grade you can send first try 80% of the time
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel, SendModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches != 0 {
+                continue;
+            }
+            routes_and_grades.push((route.0, route.1, session.clone()));
+        }
+
+        let mut flash_map: HashMap<GradeModel, (i32, i32)> = std::collections::HashMap::new();
+        for (_route, grade, session) in &routes_and_grades {
+            let count = flash_map.entry(grade.clone()).or_insert((0, 0));
+            if session.attempts == 1 {
+                count.1 += 1;
+            } else if session.r#type != "Repeat" {
+                count.0 += 1;
+            }
+        }
+        let mut max_grade = -2;
+        for (grade, (non_flashed, flashed)) in flash_map {
+            if flashed as f32 / (flashed + non_flashed) as f32 >= 0.8 && flashed >= 10 {
+                let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1;
+                if grade_num > max_grade {
+                    max_grade = grade_num;
+                }
+            }
+        }
+        Hueco::from(max_grade)
     }
 
     fn redpoint_grade_tall(&self) -> Yosemite {
         // Get the redpoint grade
-        Yosemite::FiveEight
+        // Max grade you can get after projecting (80% chance of sending in one session)
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel, SendModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches == 0 {
+                continue;
+            }
+            routes_and_grades.push((route.0, route.1, session.clone()));
+        }
+
+        let mut redpoint_map: HashMap<GradeModel, (i32, i32)> = std::collections::HashMap::new();
+        for (_route, grade, session) in &routes_and_grades {
+            let count = redpoint_map.entry(grade.clone()).or_insert((0, 0));
+            if session.r#type == "Redpoint" || session.r#type == "Onsight" || session.r#type == "Flash" {
+                count.1 += 1;
+            } else if session.r#type != "Repeat" {
+                count.0 += 1;
+            }
+        }
+        
+        let mut max_grade = -2;
+        for (grade, (non_redpoint, redpoint)) in redpoint_map {
+            if redpoint as f32 / (redpoint + non_redpoint) as f32 >= 0.8 && redpoint >= 5 {
+                let grade_num = Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
+                if grade_num > max_grade {
+                    max_grade = grade_num;
+                }
+            }
+        }
+        Yosemite::from(max_grade)
     }
 
     fn redpoint_grade_boulder(&self) -> Hueco {
         // Get the redpoint grade for bouldering
-        Hueco::V0
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel, SendModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches > 0 {
+                continue;
+            }
+            routes_and_grades.push((route.0, route.1, session.clone()));
+        }
+
+        let mut redpoint_map: HashMap<GradeModel, (i32, i32)> = std::collections::HashMap::new();
+        for (_route, grade, session) in &routes_and_grades {
+            let count = redpoint_map.entry(grade.clone()).or_insert((0, 0));
+            if session.r#type == "Redpoint" || session.r#type == "Onsight" || session.r#type == "Flash" {
+                count.1 += 1;
+            } else if session.r#type != "Repeat" {
+                count.0 += 1;
+            }
+        }
+        
+        let mut max_grade = -2;
+        for (grade, (non_redpoint, redpoint)) in redpoint_map {
+            if redpoint as f32 / (redpoint + non_redpoint) as f32 >= 0.8 && redpoint >= 5 {
+                let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32;
+                if grade_num > max_grade {
+                    max_grade = grade_num;
+                }
+            }
+        }
+        Hueco::from(max_grade)
     }
 
     fn top_tall_grade(&self) -> (Yosemite, String) {
         // Get the top tall wall grade
-        (Yosemite::FiveTwelveB, "Hard Route".to_string())
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches == 0 {
+                continue;
+            }
+            routes_and_grades.push(route);
+        }
+        let mut max_grade = -2;
+        let mut hardest_route: Option<RouteModel> = None;
+        for (route, grade) in &routes_and_grades {
+            let grade_num = Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
+            if grade_num > max_grade {
+                max_grade = grade_num;
+                hardest_route = Some(route.clone());
+            }
+        }
+        (Yosemite::from(max_grade), hardest_route.unwrap().name.clone())
     }
 
     fn top_boulder_grade(&self) -> (Hueco, String) {
         // Get the top boulder grade
-        (Hueco::V6, "Hard Boulder".to_string())
+        let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
+        for session in &self.all_sessions {
+            
+            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
+            if route.0.pitches != 0 {
+                continue;
+            }
+            routes_and_grades.push(route);
+        }
+        let mut max_grade = -2;
+        let mut hardest_route: Option<RouteModel> = None;
+        for (route, grade) in &routes_and_grades {
+            let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1;
+            if grade_num > max_grade {
+                max_grade = grade_num;
+                hardest_route = Some(route.clone());
+            }
+        }
+        (Hueco::from(max_grade), hardest_route.unwrap().name.clone())
+
     }
 
     fn other_stats(&self) -> String {
         // Get other stats from notes
-        "Other Stats".to_string()
+        "Other stats may be added in the future.".to_string()
     }
 
     fn render_exit(&mut self, ui: &mut eframe::egui::Ui) {

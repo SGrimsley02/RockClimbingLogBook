@@ -53,6 +53,7 @@ impl RoutesDb {
         )
     }
 
+    // Grade Funcs
     pub async fn add_grade(self, yosemite: Option<String>, font: Option<String>, french: Option<String>, hueco: Option<String>, uiaa: Option<String>) -> Result<(), DbErr> {
         let new_grade = grades::ActiveModel {
             yosemite: ActiveValue::Set(yosemite.clone()),
@@ -89,6 +90,12 @@ impl RoutesDb {
         Ok(grade.unwrap())
     }
 
+    pub async fn get_all_grades(self) -> Result<Vec<grades::Model>, DbErr> {
+        let all_grades = Grades::find().all(&self.db).await?;
+        Ok(all_grades)
+    }
+
+    // Route Funcs
     #[allow(clippy::too_many_arguments)]
     pub async fn add_route(self, name: String, length: i32, pitches: i32, style: String, grade_id: i32) -> Result<(), DbErr> {
         let new_route = routes::ActiveModel {
@@ -102,62 +109,7 @@ impl RoutesDb {
         Routes::insert(new_route).exec(&self.db).await?;
         Ok(())
     }
-
-    #[allow(clippy::too_many_arguments)]
-    pub async fn add_send(self, session: i32, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
-        let new_send = sends::ActiveModel {
-            session: ActiveValue::Set(session),
-            date: ActiveValue::Set(date.clone()),
-            partner: ActiveValue::Set(partner.clone()),
-            r#type: ActiveValue::Set(send_type.clone()),
-            attempts: ActiveValue::Set(attempts),
-            notes: ActiveValue::Set(notes.clone()),
-            route: ActiveValue::Set(self.clone().get_route_id(&route.name).await.unwrap().to_owned()),
-            ..Default::default()
-        };
-
-        Sends::insert(new_send).exec(&self.db).await?;
-        Ok(())
-    }
-
-    pub async fn get_session(self, id: i32) -> Result<Vec<sends::Model>, DbErr> {
-        let session = Sends::find().filter(sends::Column::Session.eq(id)).all(&self.db).await?;
-        Ok(session)
-    }
-
-    pub async fn get_all_sends(self) -> Result<Vec<sends::Model>, DbErr> {
-        let all_sends = Sends::find().all(&self.db).await?;
-        Ok(all_sends)
-    }
-
-    async fn remove_send(self, id: i32, session: i32) -> Result<(), DbErr> {
-
-        let delete_send = sends::ActiveModel {
-            id: ActiveValue::Set(id),
-            session: ActiveValue::Set(session),
-            ..Default::default()
-        };
-        delete_send.delete(&self.db).await?;
-        Ok(())
-    }
-
-    pub async fn remove_session(self, id: i32) -> Result<(), DbErr> {
-        let session = self.clone().get_session(id).await?;
-        for send in session {
-            self.clone().remove_send(send.id, send.session).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn get_next_session_id(self) -> Result<i32, DbErr> {
-        // Get the highest session id
-        let id = Sends::find().order_by_desc(sends::Column::Session).one(&self.db).await?;
-        if id.is_none() {
-            return Ok(1);
-        }
-        Ok(id.unwrap().session + 1)
-    }
-
+    
     pub async fn remove_route(self, id: i32) -> Result<(), DbErr> {
         let delete_route = routes::ActiveModel {
             id: ActiveValue::Set(id),
@@ -196,6 +148,11 @@ impl RoutesDb {
         Ok(all_routes)
     }
 
+    pub async fn find_route_by_id(self, id: i32) -> Result<routes::Model, DbErr> {
+        let route = Routes::find_by_id(id).one(&self.db).await?;
+        Ok(route.unwrap())
+    }
+
     pub async fn find_route_and_grade(self, name: &str) -> Result<(routes::Model, grades::Model), DbErr> {
         let route = self.clone().find_route_name(name).await?;
         let route = route.unwrap();
@@ -213,6 +170,63 @@ impl RoutesDb {
         Ok(all_routes_and_grades)
     }
 
+    // Send/Session Funcs
+    #[allow(clippy::too_many_arguments)]
+    pub async fn add_send(self, session: i32, route: entities::routes::Model, date: String, partner: Option<String>, send_type: String, attempts: i32, notes: Option<String>) -> Result<(), DbErr> {
+        let new_send = sends::ActiveModel {
+            session: ActiveValue::Set(session),
+            date: ActiveValue::Set(date.clone()),
+            partner: ActiveValue::Set(partner.clone()),
+            r#type: ActiveValue::Set(send_type.clone()),
+            attempts: ActiveValue::Set(attempts),
+            notes: ActiveValue::Set(notes.clone()),
+            route: ActiveValue::Set(self.clone().get_route_id(&route.name).await.unwrap().to_owned()),
+            ..Default::default()
+        };
+
+        Sends::insert(new_send).exec(&self.db).await?;
+        Ok(())
+    }
+
+    pub async fn get_session(self, id: i32) -> Result<Vec<sends::Model>, DbErr> {
+        let session = Sends::find().filter(sends::Column::Session.eq(id)).all(&self.db).await?;
+        Ok(session)
+    }
+
+    pub async fn get_all_sends(self) -> Result<Vec<sends::Model>, DbErr> {
+        let all_sends: Vec<sends::Model> = Sends::find().all(&self.db).await?;
+        Ok(all_sends)
+    }
+
+    async fn remove_send(self, id: i32, session: i32) -> Result<(), DbErr> {
+
+        let delete_send = sends::ActiveModel {
+            id: ActiveValue::Set(id),
+            session: ActiveValue::Set(session),
+            ..Default::default()
+        };
+        delete_send.delete(&self.db).await?;
+        Ok(())
+    }
+
+    pub async fn remove_session(self, id: i32) -> Result<(), DbErr> {
+        let session = self.clone().get_session(id).await?;
+        for send in session {
+            self.clone().remove_send(send.id, send.session).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn get_next_session_id(self) -> Result<i32, DbErr> {
+        // Get the highest session id
+        let id = Sends::find().order_by_desc(sends::Column::Session).one(&self.db).await?;
+        if id.is_none() {
+            return Ok(1);
+        }
+        Ok(id.unwrap().session + 1)
+    }
+
+    
     pub async fn run_db(self) -> Result<(), DbErr> { //Currently using this mostly just to test some features
         // Connect to the database
 
