@@ -21,3 +21,4 @@ The current focus moving forward with this project is to expand some of the feat
 - Location info
 - Additional statistics, including graphs and charts of data
 - Beautification
+- Additional support for indoor climbing
