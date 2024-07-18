@@ -12,3 +12,8 @@ Cargo.lock
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
+
+
+# Ignoring the log-book folder as this is a separate development project focused on the same idea
+# and it is not being pursued at the moment
+log-book/
