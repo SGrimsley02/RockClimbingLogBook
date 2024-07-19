@@ -121,6 +121,9 @@ impl RoutesDb {
 
     pub async fn find_route_name(self, name: &str) -> Result<Option<routes::Model>, DbErr> {
         let route = Routes::find().filter(routes::Column::Name.eq(name)).one(&self.db).await?;
+        if let None = route {
+            return Ok(None);
+        }
         Ok(route)
     }
 
@@ -155,6 +158,9 @@ impl RoutesDb {
 
     pub async fn find_route_and_grade(self, name: &str) -> Result<(routes::Model, grades::Model), DbErr> {
         let route = self.clone().find_route_name(name).await?;
+        if route.is_none() {
+            return Err(DbErr::RecordNotFound("Route not found".to_string()));
+        }
         let route = route.unwrap();
         let grade = self.clone().get_grade(route.grade_id).await?;
         Ok((route, grade))

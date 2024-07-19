@@ -208,11 +208,29 @@ impl MyApp {
         });
     }
 
+    fn header(&mut self, ctx: &eframe::egui::Context) { // Header for all pages
+        egui::TopBottomPanel::top("Header").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                //Display an image from the file AscentLogo.png
+                let logo = egui::include_image!("../assets/AscentLogo.png");
+                ui.image(logo);
+                ui.heading("Ascent Climbing Log");
+                
+                // Back button aligned on the right
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("Back").clicked() {
+                        self.reset();
+                    }
+                });
+                
+            });
+        });
+    }
+
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_add_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_add_grade(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) { //Should not be in end product
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Add Grade");
         ScrollArea::vertical().show(ui, |ui| {
             ui.label("Tall Wall Grade:");
@@ -292,10 +310,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_remove_grade(&mut self, ui: &mut eframe::egui::Ui) { //Should not be in end product
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_remove_grade(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) { //Should not be in end product
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Remove Grade");
 
         ScrollArea::vertical().show(ui, |ui| {
@@ -349,10 +366,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_add_route(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_add_route(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Add Route");
         ScrollArea::vertical().show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -512,10 +528,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_remove_route(&mut self, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_remove_route(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) { //Make sure to check if route exists before removing, not currently doing
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Remove Route");
         
         ScrollArea::vertical().show(ui, |ui| {
@@ -542,10 +557,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_search_home(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_search_home(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Search");
         ui.horizontal(|ui| {
             if ui.button("Find Route").clicked() {
@@ -558,10 +572,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_find_route(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        } else {
+    fn render_find_route(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         
         ui.heading("Find Route");
 
@@ -580,10 +593,15 @@ impl MyApp {
                 let search_result = Arc::clone(&self.search_result);
 
                 rt.as_ref().as_ref().unwrap().spawn(async move {
-                    let (route, grade) = <RoutesDb as Clone>::clone(&db).find_route_and_grade(&name).await.expect("Error, could not find route.");
-
-                    let mut result_lock = search_result.lock().unwrap();
-                    *result_lock = Some((route, grade));
+                    if let Ok((route, grade)) = <RoutesDb as Clone>::clone(&db).find_route_and_grade(&name).await {
+                        let mut result_lock = search_result.lock().unwrap();
+                        *result_lock = Some((route, grade));
+                    } else {
+                        let mut result_lock = search_result.lock().unwrap();
+                        *result_lock = None;
+                    }
+                    //let mut result_lock = search_result.lock().unwrap();
+                    //*result_lock = Some((route, grade));
                 });
             }
             ui.separator();
@@ -596,31 +614,27 @@ impl MyApp {
                 //ui.label(format!("Location: {}", route.location));
             }
         });
-
-        }
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_view_route(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        } else {
+    fn render_view_route(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("View Route");
-        let (view_route, view_grade) = self.viewing.clone().unwrap();
-        ui.label(format!("Grade Id: {}", { if view_route.pitches == 0 { view_grade.hueco.unwrap().to_string() } else { view_grade.yosemite.unwrap().to_string() } }));
-        ui.label(format!("Style: {}", view_route.style));
-        ui.label(format!("Length: {} ft", view_route.length));
-        ui.label(format!("Pitches: {}", view_route.pitches));
-        //ui.label(format!("Location: {}", route.location));
-        //Display notes too once implemented
+        if let Some((view_route, view_grade)) = self.viewing.clone() {
+            ui.label(format!("Grade Id: {}", { if view_route.pitches == 0 { view_grade.hueco.unwrap().to_string() } else { view_grade.yosemite.unwrap().to_string() } }));
+            ui.label(format!("Style: {}", view_route.style));
+            ui.label(format!("Length: {} ft", view_route.length));
+            ui.label(format!("Pitches: {}", view_route.pitches));
+            //ui.label(format!("Location: {}", route.location));
+            //Display notes too once implemented
         }
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_all_routes(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_all_routes(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("All Routes");
         
         ScrollArea::vertical().show(ui, |ui| {
@@ -655,10 +669,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_log_session(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_log_session(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Log Session");
 
         ScrollArea::vertical().show(ui, |ui| {
@@ -760,10 +773,9 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_delete_session(&mut self, ui: &mut eframe::egui::Ui) {
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+    fn render_delete_session(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Delete Session");
         
         ScrollArea::vertical().show(ui, |ui| {
@@ -789,11 +801,10 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_history(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_history(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
         // Display sessions in a scroll area
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("History");
 
         // Get all sessions using the database
@@ -841,20 +852,18 @@ impl MyApp {
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_view_session(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_view_session(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
         // Display info for a single session
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("View Session");
     }
 
     #[allow(clippy::too_many_lines)] //This function is long, but it's mostly just UI stuff
-    fn render_stats(&mut self, ui: &mut eframe::egui::Ui) {
+    fn render_stats(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
         // Display a variety of stats for the user
-        if ui.button("Back").clicked() {
-            self.reset();
-        }
+        self.header(&ctx);
+        ui.add_space(20.0);
         ui.heading("Stats");
 
         /* Stats to Display:
@@ -1310,19 +1319,19 @@ impl App for MyApp {
         CentralPanel::default().show(context, |ui| {
             match self.page {
                 Page::Home => self.render_home(context),
-                Page::AddGrade => self.render_add_grade(ui),
-                Page::RemoveGrade => self.render_remove_grade(ui),
-                Page::AddRoute => self.render_add_route(ui),
-                Page::RemoveRoute => self.render_remove_route(ui),
-                Page::SearchHome => self.render_search_home(ui),
-                Page::FindRoute => self.render_find_route(ui),
-                Page::ViewRoute => self.render_view_route(ui),
-                Page::ViewAllRoutes => self.render_all_routes(ui),
-                Page::LogSession => self.render_log_session(ui),
-                Page::RemoveSession => self.render_delete_session(ui),
-                Page::ViewSession => self.render_view_session(ui),
-                Page::History => self.render_history(ui),
-                Page::Stats => self.render_stats(ui),
+                Page::AddGrade => self.render_add_grade(context.clone(), ui),
+                Page::RemoveGrade => self.render_remove_grade(context.clone(), ui),
+                Page::AddRoute => self.render_add_route(context.clone(), ui),
+                Page::RemoveRoute => self.render_remove_route(context.clone(), ui),
+                Page::SearchHome => self.render_search_home(context.clone(), ui),
+                Page::FindRoute => self.render_find_route(context.clone(), ui),
+                Page::ViewRoute => self.render_view_route(context.clone(), ui),
+                Page::ViewAllRoutes => self.render_all_routes(context.clone(), ui),
+                Page::LogSession => self.render_log_session(context.clone(), ui),
+                Page::RemoveSession => self.render_delete_session(context.clone(), ui),
+                Page::ViewSession => self.render_view_session(context.clone(), ui),
+                Page::History => self.render_history(context.clone(), ui),
+                Page::Stats => self.render_stats(context.clone(), ui),
                 Page::Exit => self.render_exit(ui),
             }
         });
