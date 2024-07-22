@@ -199,6 +199,11 @@ impl RoutesDb {
         Ok(session)
     }
 
+    pub async fn get_session_by_date(self, date: String) -> Result<Vec<sends::Model>, DbErr> {
+        let session = Sends::find().filter(sends::Column::Date.eq(date)).all(&self.db).await?;
+        Ok(session)
+    }
+
     pub async fn get_all_sends(self) -> Result<Vec<sends::Model>, DbErr> {
         let all_sends: Vec<sends::Model> = Sends::find().all(&self.db).await?;
         Ok(all_sends)

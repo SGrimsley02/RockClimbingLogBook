@@ -6,8 +6,7 @@ mod routes_db;
 use routes_db::{entities::{grades::Model as GradeModel, routes::Model as RouteModel, sends::Model as SendModel}, RoutesDb};
 mod climbing;
 use climbing::{Font, French, FullGrade, Hueco, SendType, Style, Uiaa, Yosemite};
-
-
+use chrono;
 
 
 
@@ -53,7 +52,7 @@ struct RouteOptions { // All the info needed to add a route
     //notes: String,
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 struct SendOptions { // All the info needed to log a send
     date: sea_orm::prelude::Date, //EGUI works really well with sea_orm's Date type so just using that
     partner: String, // Partner's name, optional (but does not need to have an Option)
@@ -62,6 +61,19 @@ struct SendOptions { // All the info needed to log a send
     notes: String, // Any notes
     route_name: String, // Name of route, should match with a route in database
     route: Option<RouteModel>, // Route from database, fetched for the user
+}
+impl Default for SendOptions {
+    fn default() -> Self {
+        SendOptions {
+            date: chrono::Utc::now().naive_utc().into(),
+            partner: String::new(),
+            send_type: SendType::Onsight,
+            attempts: 1,
+            notes: String::new(),
+            route_name: String::new(),
+            route: None,
+        }
+    }
 }
 
 pub struct MyApp { // The main app struct
@@ -86,6 +98,7 @@ pub struct MyApp { // The main app struct
     all_sessions: Vec<SendModel>, // All sessions in the database, out of the async
     routes_w_grades_buffer: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>, // All grades in the database, in an async context
     routes_w_grades: Vec<(RouteModel, GradeModel)>, // All grades in the database, out of the async
+    search_date: sea_orm::prelude::Date, // Date to search for sessions
 }
 
 impl MyApp {
@@ -113,6 +126,7 @@ impl MyApp {
             all_sessions: Vec::new(),
             routes_w_grades_buffer: Arc::new(Mutex::new(Vec::new())),
             routes_w_grades: Vec::new(),
+            search_date: chrono::Utc::now().naive_utc().into(),
         };
         app.session.push(SendOptions::default());
         app
@@ -779,24 +793,54 @@ impl MyApp {
         ui.heading("Delete Session");
         
         ScrollArea::vertical().show(ui, |ui| {
-            // Still no good search so just doing this for now
+            
             ui.label("Please enter the session id to delete:");
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label("Session Id:");
-                ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
+                ui.add(egui_extras::DatePickerButton::new(&mut self.search_date));
             });
             ui.separator();
-            if ui.button("Delete").clicked() {
-                // Async delete session
-                let session_id = self.session_id;
+            if ui.button("Find").clicked() {
+                let session_date = self.search_date.to_string();
                 let db = Arc::clone(&self.database);
                 let rt = Arc::clone(&self.rt);
+                let results = Arc::clone(&self.cur_session);
                 rt.as_ref().as_ref().unwrap().spawn(async move {
-                    <RoutesDb as Clone>::clone(&db).remove_session(session_id).await.expect("Error, could not remove session.");
+                    let sessions = <RoutesDb as Clone>::clone(&db).get_session_by_date(session_date).await.expect("Error, could not get all sessions.");
+                    let mut sessions_guard = results.lock().unwrap();
+                    *sessions_guard = sessions;
                 });
-                self.reset();
             }
+            let mut sessions: MutexGuard<Vec<SendModel>> = self.cur_session.lock().unwrap();
+            for session in sessions.clone().iter() {
+                if ui.button("Delete").clicked() {
+                    let db = Arc::clone(&self.database);
+                    let rt = Arc::clone(&self.rt);
+                    let session_id = session.session;
+                    rt.as_ref().as_ref().unwrap().spawn(async move {
+                        <RoutesDb as Clone>::clone(&db).remove_session(session_id).await.expect("Error, could not remove session.");
+                    });
+                    sessions.retain(|s| s.session != session_id);
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(format!("Session {}: ", session.session));
+                        if ui.button("View").clicked() {
+                            self.view_session = Some(session.clone());
+                            self.page = Page::ViewSession;
+                        }
+                    });
+                    let session = session.clone();
+                    ui.label(format!("Date: {}", session.date));
+                    ui.label(format!("Partner: {}", session.partner.unwrap_or("None".to_string())));
+                    ui.label(format!("Type: {}", session.r#type));
+                    ui.label(format!("Attempts: {}", session.attempts));
+                    ui.label(format!("Route: {}", session.route));
+                    ui.separator();
+                }
+            }
+            ui.separator();
+
+            
         });
     }
 
@@ -807,14 +851,11 @@ impl MyApp {
         ui.add_space(20.0);
         ui.heading("History");
 
-        // Get all sessions using the database
-        // Display them all in a scroll area, backwards by session id (ie, most recent first)
-        // Each session should have a button to view it in more detail
-
         ScrollArea::vertical().show(ui, |ui| {
-            ui.horizontal(|ui| { //Still don't have a good search so just doing this for now
+            ui.horizontal(|ui| {
                 ui.label("Search: ");
-                ui.add(eframe::egui::widgets::DragValue::new(&mut self.session_id).speed(1.0));
+                // Search using date picker
+                ui.add(egui_extras::DatePickerButton::new(&mut self.search_date));
             });
 
             ui.separator();
@@ -822,9 +863,9 @@ impl MyApp {
             let db = Arc::clone(&self.database);
             let rt = Arc::clone(&self.rt);
             let results = Arc::clone(&self.cur_session);
-            let session_id = self.session_id;
+            let session_date = self.search_date.to_string();
             rt.as_ref().as_ref().unwrap().spawn(async move {
-                let sessions = <RoutesDb as Clone>::clone(&db).get_session(session_id).await.expect("Error, could not get all sessions.");
+                let sessions = <RoutesDb as Clone>::clone(&db).get_session_by_date(session_date).await.expect("Error, could not get all sessions.");
                 let mut sessions_guard = results.lock().unwrap();
                 *sessions_guard = sessions;
             });
