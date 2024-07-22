@@ -27,6 +27,7 @@ enum Page { // All the possible pages for the app to display
     ViewSession,
     History,
     Stats,
+    Settings,
     Exit,
 }
 
@@ -961,6 +962,15 @@ impl MyApp {
         });
     }
 
+    fn render_settings(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        // Display settings for the user
+        self.header(&ctx);
+        ui.add_space(20.0);
+        ui.heading("Settings");
+
+        ui.label("Coming soon...");
+    }
+
     fn render_stats_content(&self, ui: &mut eframe::egui::Ui) {
         ui.label(format!("Total Sends: {}", self.total_sends()));
         ui.label(format!("Total Sessions: {}", self.total_sessions()));
@@ -1395,6 +1405,7 @@ impl App for MyApp {
                 Page::ViewSession => self.render_view_session(context.clone(), ui),
                 Page::History => self.render_history(context.clone(), ui),
                 Page::Stats => self.render_stats(context.clone(), ui),
+                Page::Settings => self.render_settings(context.clone(), ui),
                 Page::Exit => self.render_exit(ui),
             }
         });
