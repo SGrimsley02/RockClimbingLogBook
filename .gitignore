@@ -17,3 +17,6 @@ Cargo.lock
 # Ignoring the log-book folder as this is a separate development project focused on the same idea
 # and it is not being pursued at the moment
 log-book/
+
+# Ignore readme file
+climb-log/migration/README.md
