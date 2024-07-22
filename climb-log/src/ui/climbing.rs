@@ -158,6 +158,7 @@ pub enum Yosemite {
     FiveFifteenC,
     FiveFifteenD,
     //add more as needed
+    None,
 }
 impl std::fmt::Display for Yosemite {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -200,6 +201,7 @@ impl std::fmt::Display for Yosemite {
             Yosemite::FiveFifteenB => write!(f, "5.15b"),
             Yosemite::FiveFifteenC => write!(f, "5.15c"),
             Yosemite::FiveFifteenD => write!(f, "5.15d"),
+            Yosemite::None => write!(f, "None"),
         }
     }
 }
@@ -239,6 +241,7 @@ impl std::convert::From<Hueco> for Yosemite { //Note, since this is between boul
             Hueco::V9Plus => Yosemite::FiveThirteenD,
             Hueco::V10Minus => Yosemite::FiveFourteenA,
             Hueco::V10 => Yosemite::FiveFourteenA,
+            Hueco::None => Yosemite::None,
             _ => Yosemite::FiveNine, //default to 5.9
         }
     }
@@ -427,6 +430,7 @@ impl std::convert::From<String> for Yosemite {
             "5.15b" => Yosemite::FiveFifteenB,
             "5.15c" => Yosemite::FiveFifteenC,
             "5.15d" => Yosemite::FiveFifteenD,
+            "None" => Yosemite::None,
             _ => Yosemite::FiveNine, //default to 5.9
         }
     }
@@ -472,7 +476,7 @@ impl std::convert::From<i32> for Yosemite {
             35 => Yosemite::FiveFifteenB,
             36 => Yosemite::FiveFifteenC,
             37 => Yosemite::FiveFifteenD,
-            _ => Yosemite::FiveNine, //default to 5.9
+            _ => Yosemite::None, //default to 5.9
         }
     }
 }
@@ -751,6 +755,7 @@ pub enum Hueco { //V Scale
     V17,
     V17Plus,
     //add more as needed
+    None,
 }
 impl std::fmt::Display for Hueco {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -810,6 +815,7 @@ impl std::fmt::Display for Hueco {
             Hueco::V17Minus => write!(f, "V17-"),
             Hueco::V17 => write!(f, "V17"),
             Hueco::V17Plus => write!(f, "V17+"),
+            Hueco::None => write!(f, "None"),
         }
     }
 }
@@ -871,7 +877,7 @@ impl std::convert::From<i32> for Hueco {
             51 => Hueco::V17Minus,
             52 => Hueco::V17,
             53 => Hueco::V17Plus,
-            _ => Hueco::V0, //default to V0
+            _ => Hueco::None, //default to no grade
         }
     }
 
@@ -934,6 +940,7 @@ impl std::convert::From<String> for Hueco {
             "V17-" => Hueco::V17Minus,
             "V17" => Hueco::V17,
             "V17+" => Hueco::V17Plus,
+            "None" => Hueco::None,
             _ => Hueco::V0, //default to V0
         }
     }

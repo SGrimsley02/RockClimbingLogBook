@@ -137,10 +137,10 @@ impl MyApp {
         let app = MyApp::new(&rt).await;
         let win_option = NativeOptions::default(); //Using default options for now
         // Run
-        let _ = run_native(
+        let _ = run_native (
             "Ascent Climbing Log",
             win_option,
-            Box::new(|_cc| Box::new(app)),
+            Box::new(|_cc| Ok(Box::new(app) as Box<dyn App + 'static>)),
         );
         // Shutdown the runtime when quitting
         if let Some(runtime) = Arc::try_unwrap(rt).ok().and_then(|opt| opt) {
@@ -1004,11 +1004,17 @@ impl MyApp {
 
     fn avg_sends(&self) -> f32 {
         // Get the average number of sends per session
+        if self.total_sessions() == 0 {
+            return 0.0;
+        }
         self.total_sends() as f32 / self.total_sessions() as f32
     }
 
     fn avg_attempts(&self) -> f32 {
         // Get the average number of attempts per send
+        if self.total_sends() == 0 {
+            return 0.0;
+        }
         self.all_sessions.iter().map(|session| session.attempts).sum::<i32>() as f32 / self.total_sends() as f32
     }
 
@@ -1027,6 +1033,9 @@ impl MyApp {
         let mut grade_sum = 0;
         for (_route, grade) in &routes_and_grades {
             grade_sum += Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
+        }
+        if routes_and_grades.is_empty() {
+            return Yosemite::None;
         }
         let grade_num = (grade_sum / routes_and_grades.len() as i32) as i32;
         Yosemite::from(grade_num)
@@ -1048,6 +1057,9 @@ impl MyApp {
         let mut grade_sum = 0;
         for (_, grade) in &routes_and_grades {
             grade_sum += Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1; // For some reason this needs to be -1, not sure why but it fixes everything here
+        }
+        if routes_and_grades.is_empty() {
+            return Hueco::None;
         }
         let grade_num = grade_sum / routes_and_grades.len() as i32;
         Hueco::from(grade_num)
@@ -1148,7 +1160,7 @@ impl MyApp {
                 count.0 += 1;
             }
         }
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         for (grade, (non_flashed, flashed)) in flash_map {
             if flashed as f32 / (flashed + non_flashed) as f32 >= 0.8 {
                 let grade_num = Yosemite::from(grade.yosemite.clone().unwrap());
@@ -1183,7 +1195,7 @@ impl MyApp {
                 count.0 += 1;
             }
         }
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         for (grade, (non_flashed, flashed)) in flash_map {
             if flashed as f32 / (flashed + non_flashed) as f32 >= 0.8 && flashed >= 10 {
                 let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1;
@@ -1218,7 +1230,7 @@ impl MyApp {
             }
         }
         
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         for (grade, (non_redpoint, redpoint)) in redpoint_map {
             if redpoint as f32 / (redpoint + non_redpoint) as f32 >= 0.8 && redpoint >= 5 {
                 let grade_num = Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
@@ -1252,7 +1264,7 @@ impl MyApp {
             }
         }
         
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         for (grade, (non_redpoint, redpoint)) in redpoint_map {
             if redpoint as f32 / (redpoint + non_redpoint) as f32 >= 0.8 && redpoint >= 5 {
                 let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32;
@@ -1269,13 +1281,14 @@ impl MyApp {
         let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
         for session in &self.all_sessions {
             
-            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
-            if route.0.pitches == 0 {
-                continue;
+            if let Some(route) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route) {
+                if route.0.pitches == 0 {
+                    continue;
+                }
+                routes_and_grades.push(route.clone());
             }
-            routes_and_grades.push(route);
         }
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         let mut hardest_route: Option<RouteModel> = None;
         for (route, grade) in &routes_and_grades {
             let grade_num = Yosemite::from(grade.yosemite.clone().unwrap()) as i32;
@@ -1284,21 +1297,25 @@ impl MyApp {
                 hardest_route = Some(route.clone());
             }
         }
-        (Yosemite::from(max_grade), hardest_route.unwrap().name.clone())
+        if let Some(route) = hardest_route.clone() {
+            return (Yosemite::from(max_grade), route.name.clone());
+        } else {
+            return (Yosemite::None, "None".to_string());
+        }
     }
 
     fn top_boulder_grade(&self) -> (Hueco, String) {
         // Get the top boulder grade
         let mut routes_and_grades: Vec<(RouteModel, GradeModel)> = Vec::new();
         for session in &self.all_sessions {
-            
-            let route: (RouteModel, GradeModel) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route).unwrap().clone();
-            if route.0.pitches != 0 {
-                continue;
+            if let Some(route) = self.routes_w_grades.iter().find(|(route, _)| route.id == session.route) {
+                if route.0.pitches != 0 {
+                    continue;
+                }
+                routes_and_grades.push(route.clone());
             }
-            routes_and_grades.push(route);
         }
-        let mut max_grade = -2;
+        let mut max_grade = -5;
         let mut hardest_route: Option<RouteModel> = None;
         for (route, grade) in &routes_and_grades {
             let grade_num = Hueco::from(grade.hueco.clone().unwrap()) as i32 - 1;
@@ -1307,7 +1324,12 @@ impl MyApp {
                 hardest_route = Some(route.clone());
             }
         }
-        (Hueco::from(max_grade), hardest_route.unwrap().name.clone())
+        if let Some(route) = hardest_route.clone() {
+            return (Hueco::from(max_grade), route.name.clone());
+        } else {
+            return (Hueco::None, "None".to_string());
+        }
+        
 
     }
 

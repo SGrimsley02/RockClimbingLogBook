@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-eframe = "0.27.2"
-egui_extras = { version = "0.27.2", features = [ "all_loaders", "chrono" ] }
+eframe = "0.28.1"
+egui_extras = { version = "0.28.1", features = [ "all_loaders", "chrono" ] }
 image = { version = "0.25.1", features = [ "png" ]}
 futures = "0.3.30"
 itertools = "0.13.0"
