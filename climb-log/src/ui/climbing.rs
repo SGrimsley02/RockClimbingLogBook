@@ -32,7 +32,6 @@ impl Route {
         }
     }
 }
-
 impl std::fmt::Display for Route {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}, {} ft, {} pitches, at {}", self.name, self.grade, self.length, self.pitches, self.location)
@@ -85,6 +84,52 @@ impl std::fmt::Display for Style {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq,)]
+pub enum TallGradeSys {
+    Yosemite,
+    French,
+    Uiaa,
+}
+impl std::fmt::Display for TallGradeSys {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TallGradeSys::French => write!(f, "French"),
+            TallGradeSys::Uiaa => write!(f, "UIAA"),
+            TallGradeSys::Yosemite => write!(f, "Yosemite"),
+        }
+    }
+}
+impl TallGradeSys {
+    pub fn iter() -> impl Iterator<Item = TallGradeSys> {
+        [
+            TallGradeSys::Yosemite,
+            TallGradeSys::French,
+            TallGradeSys::Uiaa,
+        ].iter().copied()
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq,)]
+pub enum BoulderGradeSys {
+    Hueco,
+    Font,
+}
+impl std::fmt::Display for BoulderGradeSys {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            BoulderGradeSys::Font => write!(f, "Font"),
+            BoulderGradeSys::Hueco => write!(f, "Hueco (V-Grade)"),
+        }
+    }
+}
+impl BoulderGradeSys {
+    pub fn iter() -> impl Iterator<Item = BoulderGradeSys> {
+        [
+            BoulderGradeSys::Hueco,
+            BoulderGradeSys::Font,
+        ].iter().copied()
+    }
+}
 
 #[derive(Debug, Copy, Clone)]
 pub enum Grade {

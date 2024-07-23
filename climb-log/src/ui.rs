@@ -5,11 +5,28 @@ use eframe::{egui::{self, CentralPanel, ScrollArea}, App, run_native, NativeOpti
 mod routes_db;
 use routes_db::{entities::{grades::Model as GradeModel, routes::Model as RouteModel, sends::Model as SendModel}, RoutesDb};
 mod climbing;
-use climbing::{Font, French, FullGrade, Hueco, SendType, Style, Uiaa, Yosemite};
+use climbing::{Font, French, FullGrade, Hueco, SendType, Style, TallGradeSys, BoulderGradeSys, Uiaa, Yosemite};
 use chrono;
 
+struct UserSettings { // App settings
+    dark_mode: bool,
+    tall_grade_sys: TallGradeSys,
+    boulder_grade_sys: BoulderGradeSys,
+    user: User,
+}
+impl Default for UserSettings {
+    fn default() -> Self {
+        UserSettings {
+            dark_mode: false,
+            tall_grade_sys: TallGradeSys::Yosemite,
+            boulder_grade_sys: BoulderGradeSys::Hueco,
+            user: User,
+        }
+    }
+}
 
 
+struct User;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Page { // All the possible pages for the app to display
@@ -100,6 +117,7 @@ pub struct MyApp { // The main app struct
     routes_w_grades_buffer: Arc<Mutex<Vec<(RouteModel, GradeModel)>>>, // All grades in the database, in an async context
     routes_w_grades: Vec<(RouteModel, GradeModel)>, // All grades in the database, out of the async
     search_date: sea_orm::prelude::Date, // Date to search for sessions
+    settings: UserSettings, // Settings for the app
 }
 
 impl MyApp {
@@ -128,6 +146,7 @@ impl MyApp {
             routes_w_grades_buffer: Arc::new(Mutex::new(Vec::new())),
             routes_w_grades: Vec::new(),
             search_date: chrono::Utc::now().naive_utc().into(),
+            settings: UserSettings::default(),
         };
         app.session.push(SendOptions::default());
         app
@@ -202,6 +221,10 @@ impl MyApp {
                 ui.add_space(10.0);
                 if ui.button("Stats").clicked() {
                     self.page = Page::Stats;
+                }
+                ui.add_space(10.0);
+                if ui.button("Settings").clicked() {
+                    self.page = Page::Settings;
                 }
                 ui.add_space(10.0);
                 if ui.button("Exit").clicked() {
@@ -968,7 +991,35 @@ impl MyApp {
         ui.add_space(20.0);
         ui.heading("Settings");
 
-        ui.label("Coming soon...");
+        CentralPanel::default().show(&ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Light/Dark Mode:");
+                egui::global_dark_light_mode_buttons(ui);
+            });
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label("Tall Wall Grading System:");
+                egui::ComboBox::from_label("Tall Wall Grading").selected_text(self.settings.tall_grade_sys.to_string()).show_ui(ui, |ui| {
+                    TallGradeSys::iter().for_each(|grade_sys| {
+                        ui.selectable_value(&mut self.settings.tall_grade_sys, grade_sys, format!("{grade_sys}"));
+                    });
+                })
+            });
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label("Bouldering Grade System:");
+                egui::ComboBox::from_label("Boulder Grading").selected_text(self.settings.boulder_grade_sys.to_string()).show_ui(ui, |ui| {
+                    BoulderGradeSys::iter().for_each(|grade_sys| {
+                        ui.selectable_value(&mut self.settings.boulder_grade_sys, grade_sys, format!("{grade_sys}"));
+                    });
+                })
+            });
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label("User Settings: Coming soon...");
+            });
+            // More settings as they come up
+        });
     }
 
     fn render_stats_content(&self, ui: &mut eframe::egui::Ui) {
