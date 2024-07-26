@@ -20,3 +20,7 @@ log-book/
 
 # Ignore readme file
 climb-log/migration/README.md
+
+climb-log/sample-01/
+
+.DS_Store

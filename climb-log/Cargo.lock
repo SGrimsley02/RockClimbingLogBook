@@ -1009,6 +1009,7 @@ dependencies = [
  "itertools 0.13.0",
  "sea-orm",
  "tokio",
+ "webbrowser",
 ]
 
 [[package]]
