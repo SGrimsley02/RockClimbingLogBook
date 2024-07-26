@@ -20,3 +20,6 @@ log-book/
 
 # Ignore readme file
 climb-log/migration/README.md
+
+# Ignore the sample login
+climb-log/sample-01/
