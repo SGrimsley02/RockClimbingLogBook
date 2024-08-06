@@ -17,16 +17,69 @@ struct UserSettings { // App settings
 impl Default for UserSettings {
     fn default() -> Self {
         UserSettings {
-            dark_mode: false,
+            dark_mode: false, // Currently not being used thanks to egui's built-in dark mode
             tall_grade_sys: TallGradeSys::Yosemite,
             boulder_grade_sys: BoulderGradeSys::Hueco,
-            user: User,
+            user: User::default(),
+        }
+    }
+}
+
+impl UserSettings {
+    pub fn render(&mut self, _ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
+        ui.add_space(20.0);
+        ui.heading("Settings");
+        ui.horizontal(|ui| {
+            ui.label("Dark Mode:");
+            egui::global_dark_light_mode_buttons(ui);
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Tall Wall Grade System:");
+            egui::ComboBox::from_label("Tall Wall Grade System")
+                .selected_text(format!("{}", self.tall_grade_sys))
+                .show_ui(ui, |ui| {
+                    TallGradeSys::iter().for_each(|grade_sys| {
+                        ui.selectable_value(&mut self.tall_grade_sys, grade_sys, format!("{grade_sys}"));
+                    });
+                });
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Boulder Grade System:");
+            egui::ComboBox::from_label("Boulder Grade System")
+                .selected_text(format!("{}", self.boulder_grade_sys))
+                .show_ui(ui, |ui| {
+                    BoulderGradeSys::iter().for_each(|grade_sys| {
+                        ui.selectable_value(&mut self.boulder_grade_sys, grade_sys, format!("{grade_sys}"));
+                    });
+                });
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("User:");
+            ui.text_edit_singleline(&mut self.user.name);
+        });
+        ui.separator();
+        if ui.button("Save").clicked() {
+            // Save settings
         }
     }
 }
 
 
-struct User;
+
+
+struct User {
+    name: String,
+}
+impl Default for User {
+    fn default() -> Self {
+        User {
+            name: String::new(),
+        }
+    }
+}
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Page { // All the possible pages for the app to display
@@ -988,38 +1041,16 @@ impl MyApp {
     fn render_settings(&mut self, ctx: eframe::egui::Context, ui: &mut eframe::egui::Ui) {
         // Display settings for the user
         self.header(&ctx);
-        ui.add_space(20.0);
-        ui.heading("Settings");
-
-        CentralPanel::default().show(&ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.label("Light/Dark Mode:");
-                egui::global_dark_light_mode_buttons(ui);
+        self.settings.render(ctx, ui);
+        ui.separator();
+        if ui.button("Export").clicked() {
+            // Export the database
+            let db = Arc::clone(&self.database);
+            let rt = Arc::clone(&self.rt);
+            rt.as_ref().as_ref().unwrap().spawn(async move {
+                <RoutesDb as Clone>::clone(&db).to_csv().await.expect("Error, could not export database.");
             });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                ui.label("Tall Wall Grading System:");
-                egui::ComboBox::from_label("Tall Wall Grading").selected_text(self.settings.tall_grade_sys.to_string()).show_ui(ui, |ui| {
-                    TallGradeSys::iter().for_each(|grade_sys| {
-                        ui.selectable_value(&mut self.settings.tall_grade_sys, grade_sys, format!("{grade_sys}"));
-                    });
-                })
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                ui.label("Bouldering Grade System:");
-                egui::ComboBox::from_label("Boulder Grading").selected_text(self.settings.boulder_grade_sys.to_string()).show_ui(ui, |ui| {
-                    BoulderGradeSys::iter().for_each(|grade_sys| {
-                        ui.selectable_value(&mut self.settings.boulder_grade_sys, grade_sys, format!("{grade_sys}"));
-                    });
-                })
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                ui.label("User Settings: Coming soon...");
-            });
-            // More settings as they come up
-        });
+        }
     }
 
     fn render_stats_content(&self, ui: &mut eframe::egui::Ui) {

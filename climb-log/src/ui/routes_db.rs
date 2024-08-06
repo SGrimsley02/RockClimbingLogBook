@@ -237,6 +237,25 @@ impl RoutesDb {
         Ok(id.unwrap().session + 1)
     }
 
+    pub async fn to_csv(self) -> Result<(), Box<dyn std::error::Error>> {
+        let all_sends = self.clone().get_all_sends().await?;
+        let date = chrono::Local::now().format("%Y-%m-%d").to_string();
+        let filename = format!("Ascent-Climb-Log-{}.csv", date);
+        let mut wtr = csv::Writer::from_path(filename)?;
+        wtr.write_record(&["Date", "Partner", "Type", "Attempts", "Notes", "Route"])?;
+        for send in all_sends {
+            wtr.write_record(&[
+                send.date,
+                send.partner.unwrap_or("".to_string()),
+                send.r#type,
+                send.attempts.to_string(),
+                send.notes.unwrap_or("".to_string()),
+                self.clone().find_route_by_id(send.route).await?.name,
+            ])?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
     
     pub async fn run_db(self) -> Result<(), DbErr> { //Currently using this mostly just to test some features
         // Connect to the database
