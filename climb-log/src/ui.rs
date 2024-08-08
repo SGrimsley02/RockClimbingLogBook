@@ -68,7 +68,9 @@ impl UserSettings {
 }
 
 
-
+struct Stats;
+// May try to refactor the helper functions to belong to this, but not sure if it's worth it since most
+// info belongs to the app itself
 
 struct User {
     name: String,

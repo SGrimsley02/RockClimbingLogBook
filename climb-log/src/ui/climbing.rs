@@ -53,6 +53,15 @@ impl std::fmt::Display for Send {
     }
 }
 
+trait TallGradeSysConvert {
+    fn to_yosemite(&self) -> Yosemite;
+    fn to_french(&self) -> French;
+    fn to_uiaa(&self) -> Uiaa;
+}
+trait BoulderGradeSysConvert {
+    fn to_font(&self) -> Font;
+    fn to_hueco(&self) -> Hueco;
+}
 
 #[derive(Debug, Clone)]
 pub enum Style {
@@ -683,6 +692,47 @@ impl std::fmt::Display for Font {
         }
     }
 }
+impl std::convert::From<Hueco> for Font {
+    fn from(hueco: Hueco) -> Font {
+        match hueco {
+            Hueco::Vb => Font::Five,
+            Hueco::V0Minus => Font::FivePlus,
+            Hueco::V0 => Font::SixAMinus,
+            Hueco::V0Plus => Font::SixA,
+            Hueco::V1Minus => Font::SixAPlus,
+            Hueco::V1 => Font::SixBMinus,
+            Hueco::V1Plus => Font::SixB,
+            Hueco::V2Minus => Font::SixBPlus,
+            Hueco::V2 => Font::SixCMinus,
+            Hueco::V2Plus => Font::SixC,
+            Hueco::V3Minus => Font::SixCPlus,
+            Hueco::V3 => Font::SevenAMinus,
+            Hueco::V3Plus => Font::SevenA,
+            Hueco::V4Minus => Font::SevenAPlus,
+            Hueco::V4 => Font::SevenBMinus,
+            Hueco::V4Plus => Font::SevenB,
+            Hueco::V5Minus => Font::SevenBPlus,
+            Hueco::V5 => Font::SevenCMinus,
+            Hueco::V5Plus => Font::SevenC,
+            Hueco::V6Minus => Font::SevenCPlus,
+            Hueco::V6 => Font::EightAMinus,
+            Hueco::V6Plus => Font::EightA,
+            Hueco::V7Minus => Font::EightAPlus,
+            Hueco::V7 => Font::EightBMinus,
+            Hueco::V7Plus => Font::EightB,
+            Hueco::V8Minus => Font::EightBPlus,
+            Hueco::V8 => Font::EightCMinus,
+            Hueco::V8Plus => Font::EightC,
+            Hueco::V9Minus => Font::EightCPlus,
+            Hueco::V9 => Font::NineAMinus,
+            Hueco::V9Plus => Font::NineA,
+            Hueco::V10Minus => Font::NineAPlus,
+            Hueco::V10 => Font::NineBMinus,
+            Hueco::None => Font::NineB,
+            _ => Font::Five, //default to 5
+        }
+    }
+}
 impl Font {
     pub fn iter() -> impl Iterator<Item = Font> {
         [
@@ -990,6 +1040,64 @@ impl std::convert::From<String> for Hueco {
         }
     }
 }
+impl std::convert::From<Font> for Hueco {
+    fn from(font: Font) -> Hueco {
+        match font {
+            Font::OneMinus => Hueco::V0Minus,
+            Font::One => Hueco::V0,
+            Font::OnePlus => Hueco::V0Plus,
+            Font::TwoMinus => Hueco::V1Minus,
+            Font::Two => Hueco::V1,
+            Font::TwoPlus => Hueco::V1Plus,
+            Font::ThreeMinus => Hueco::V2Minus,
+            Font::Three => Hueco::V2,
+            Font::ThreePlus => Hueco::V2Plus,
+            Font::FourMinus => Hueco::V3Minus,
+            Font::Four => Hueco::V3,
+            Font::FourPlus => Hueco::V3Plus,
+            Font::FiveMinus => Hueco::V4Minus,
+            Font::Five => Hueco::V4,
+            Font::FivePlus => Hueco::V4Plus,
+            Font::SixAMinus => Hueco::V5Minus,
+            Font::SixA => Hueco::V5,
+            Font::SixAPlus => Hueco::V5Plus,
+            Font::SixBMinus => Hueco::V6Minus,
+            Font::SixB => Hueco::V6,
+            Font::SixBPlus => Hueco::V6Plus,
+            Font::SixCMinus => Hueco::V7Minus,
+            Font::SixC => Hueco::V7,
+            Font::SixCPlus => Hueco::V7Plus,
+            Font::SevenAMinus => Hueco::V8Minus,
+            Font::SevenA => Hueco::V8,
+            Font::SevenAPlus => Hueco::V8Plus,
+            Font::SevenBMinus => Hueco::V9Minus,
+            Font::SevenB => Hueco::V9,
+            Font::SevenBPlus => Hueco::V9Plus,
+            Font::SevenCMinus => Hueco::V10Minus,
+            Font::SevenC => Hueco::V10,
+            Font::SevenCPlus => Hueco::V10Plus,
+            Font::EightAMinus => Hueco::V11Minus,
+            Font::EightA => Hueco::V11,
+            Font::EightAPlus => Hueco::V11Plus,
+            Font::EightBMinus => Hueco::V12Minus,
+            Font::EightB => Hueco::V12,
+            Font::EightBPlus => Hueco::V12Plus,
+            Font::EightCMinus => Hueco::V13Minus,
+            Font::EightC => Hueco::V13,
+            Font::EightCPlus => Hueco::V13Plus,
+            Font::NineAMinus => Hueco::V14Minus,
+            Font::NineA => Hueco::V14,
+            Font::NineAPlus => Hueco::V14Plus,
+            Font::NineBMinus => Hueco::V15Minus,
+            Font::NineB => Hueco::V15,
+            Font::NineBPlus => Hueco::V15Plus,
+            Font::NineCMinus => Hueco::V16Minus,
+            Font::NineC => Hueco::V16,
+            Font::NineCPlus => Hueco::V16Plus,
+            _ => Hueco::V0, //default to V0
+        }
+    }
+}
 impl Hueco {
     pub fn iter() -> impl Iterator<Item = Hueco> {
         [
@@ -1199,6 +1307,43 @@ impl std::convert::From<Yosemite> for French {
     }
 
 }
+impl std::convert::From<Uiaa> for French {
+    fn from(uiaa: Uiaa) -> French {
+        match uiaa {
+            Uiaa::I => French::One,
+            Uiaa::Ii => French::Two,
+            Uiaa::Iii => French::Three,
+            Uiaa::IvMinus => French::FourA,
+            Uiaa::Iv => French::FourB,
+            Uiaa::IvPlus => French::FourC,
+            Uiaa::VMinus => French::FiveA,
+            Uiaa::V => French::FiveB,
+            Uiaa::VPlus => French::FiveC,
+            Uiaa::ViMinus => French::SixAMinus,
+            Uiaa::Vi => French::SixA,
+            Uiaa::ViPlus => French::SixAPlus,
+            Uiaa::ViiMinus => French::SixBMinus,
+            Uiaa::Vii => French::SixB,
+            Uiaa::ViiPlus => French::SixBPlus,
+            Uiaa::ViiiMinus => French::SixCMinus,
+            Uiaa::Viii => French::SixC,
+            Uiaa::ViiiPlus => French::SixCPlus,
+            Uiaa::IxMinus => French::SevenAMinus,
+            Uiaa::Ix => French::SevenA,
+            Uiaa::IxPlus => French::SevenAPlus,
+            Uiaa::XMinus => French::SevenBMinus,
+            Uiaa::X => French::SevenB,
+            Uiaa::XPlus => French::SevenBPlus,
+            Uiaa::XiMinus => French::SevenCMinus,
+            Uiaa::Xi => French::SevenC,
+            Uiaa::XiPlus => French::SevenCPlus,
+            Uiaa::XiiMinus => French::EightAMinus,
+            Uiaa::Xii => French::EightA,
+            Uiaa::XiiPlus => French::EightAPlus,
+            _ => French::SixC,
+        }
+    }
+}
 impl French {
     pub fn iter() -> impl Iterator<Item = French> {
         [
@@ -1321,6 +1466,80 @@ impl std::fmt::Display for Uiaa {
         }
     }
 }
+impl std::convert::From<Yosemite> for Uiaa { // Not currently accurate grading, just testing
+    fn from(yosemite: Yosemite) -> Uiaa {
+        match yosemite {
+            Yosemite::FiveZero => Uiaa::I,
+            Yosemite::FiveOne => Uiaa::Ii,
+            Yosemite::FiveTwo => Uiaa::Iii,
+            Yosemite::FiveThree => Uiaa::IvMinus,
+            Yosemite::FiveFour => Uiaa::Iv,
+            Yosemite::FiveFive => Uiaa::IvPlus,
+            Yosemite::FiveSix => Uiaa::VMinus,
+            Yosemite::FiveSeven => Uiaa::V,
+            Yosemite::FiveEight => Uiaa::VPlus,
+            Yosemite::FiveNine => Uiaa::ViMinus,
+            Yosemite::FiveTenA => Uiaa::Vi,
+            Yosemite::FiveTenB => Uiaa::ViPlus,
+            Yosemite::FiveTenC => Uiaa::ViiMinus,
+            Yosemite::FiveTenD => Uiaa::Vii,
+            Yosemite::FiveElevenA => Uiaa::ViiPlus,
+            Yosemite::FiveElevenB => Uiaa::ViiiMinus,
+            Yosemite::FiveElevenC => Uiaa::Viii,
+            Yosemite::FiveElevenD => Uiaa::ViiiPlus,
+            Yosemite::FiveTwelveA => Uiaa::IxMinus,
+            Yosemite::FiveTwelveB => Uiaa::Ix,
+            Yosemite::FiveTwelveC => Uiaa::IxPlus,
+            Yosemite::FiveTwelveD => Uiaa::XMinus,
+            Yosemite::FiveThirteenA => Uiaa::X,
+            Yosemite::FiveThirteenB => Uiaa::XPlus,
+            Yosemite::FiveThirteenC => Uiaa::XiMinus,
+            Yosemite::FiveThirteenD => Uiaa::Xi,
+            Yosemite::FiveFourteenA => Uiaa::XiPlus,
+            Yosemite::FiveFourteenB => Uiaa::XiiMinus,
+            Yosemite::FiveFourteenC => Uiaa::Xii,
+            Yosemite::FiveFourteenD => Uiaa::XiiPlus,
+            _ => Uiaa::Iv,
+        }
+    }
+}
+impl std::convert::From<French> for Uiaa {
+    fn from(french: French) -> Uiaa {
+        match french {
+            French::One => Uiaa::I,
+            French::Two => Uiaa::Ii,
+            French::Three => Uiaa::Iii,
+            French::FourA => Uiaa::IvMinus,
+            French::FourB => Uiaa::Iv,
+            French::FourC => Uiaa::IvPlus,
+            French::FiveA => Uiaa::VMinus,
+            French::FiveB => Uiaa::V,
+            French::FiveC => Uiaa::VPlus,
+            French::SixAMinus => Uiaa::ViMinus,
+            French::SixA => Uiaa::Vi,
+            French::SixAPlus => Uiaa::ViPlus,
+            French::SixBMinus => Uiaa::ViiMinus,
+            French::SixB => Uiaa::Vii,
+            French::SixBPlus => Uiaa::ViiPlus,
+            French::SixCMinus => Uiaa::ViiiMinus,
+            French::SixC => Uiaa::Viii,
+            French::SixCPlus => Uiaa::ViiiPlus,
+            French::SevenAMinus => Uiaa::IxMinus,
+            French::SevenA => Uiaa::Ix,
+            French::SevenAPlus => Uiaa::IxPlus,
+            French::SevenBMinus => Uiaa::XMinus,
+            French::SevenB => Uiaa::X,
+            French::SevenBPlus => Uiaa::XPlus,
+            French::SevenCMinus => Uiaa::XiMinus,
+            French::SevenC => Uiaa::Xi,
+            French::SevenCPlus => Uiaa::XiPlus,
+            French::EightAMinus => Uiaa::XiiMinus,
+            French::EightA => Uiaa::Xii,
+            French::EightAPlus => Uiaa::XiiPlus,
+            _ => Uiaa::Viii,
+        }
+    }
+}
 impl Uiaa {
     pub fn iter() -> impl Iterator<Item = Uiaa> {
         [
@@ -1400,3 +1619,62 @@ impl SendType {
 
 }
 
+
+impl TallGradeSysConvert for Yosemite {
+    fn to_yosemite(&self) -> Yosemite {
+        *self
+    }
+
+    fn to_french(&self) -> French {
+        French::from(*self)
+    }
+
+    fn to_uiaa(&self) -> Uiaa {
+        Uiaa::from(*self)
+    }
+}
+impl TallGradeSysConvert for French {
+    fn to_yosemite(&self) -> Yosemite {
+        Yosemite::from(*self)
+    }
+
+    fn to_french(&self) -> French {
+        *self
+    }
+
+    fn to_uiaa(&self) -> Uiaa {
+        Uiaa::from(*self)
+    }
+}
+impl TallGradeSysConvert for Uiaa {
+    fn to_yosemite(&self) -> Yosemite {
+        Yosemite::from(*self)
+    }
+
+    fn to_french(&self) -> French {
+        French::from(*self)
+    }
+
+    fn to_uiaa(&self) -> Uiaa {
+        *self
+    }
+}
+
+impl BoulderGradeSysConvert for Hueco {
+    fn to_hueco(&self) -> Hueco {
+        *self
+    }
+
+    fn to_font(&self) -> Font {
+        Font::from(*self)
+    }
+}
+impl BoulderGradeSysConvert for Font {
+    fn to_hueco(&self) -> Hueco {
+        Hueco::from(*self)
+    }
+
+    fn to_font(&self) -> Font {
+        *self
+    }
+}
