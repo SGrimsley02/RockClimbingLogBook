@@ -1503,3 +1503,41 @@ impl App for MyApp {
     }
 
 }
+
+
+struct UiElems; // UI Elements for the app
+impl UiElems {
+    fn header(ctx: &eframe::egui::Context, mut app: MyApp) { // Header for all pages
+        egui::TopBottomPanel::top("Header").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                //Display an image from the file AscentLogo.png
+                let logo = egui::include_image!("../assets/AscentLogo.png");
+                ui.image(logo);
+                ui.heading("Ascent Climbing Log");
+                
+                // Back button aligned on the right
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("Back").clicked() {
+                        app.reset();
+                    }
+                });
+                
+            });
+        });
+    }
+
+    fn footer(ctx: &eframe::egui::Context) { // Footer for all pages
+        egui::TopBottomPanel::bottom("Footer").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Made by Team Ascent");
+            });
+        });
+    }
+
+    fn tall_grade_dropdown(ctx: &eframe::egui::Context, grade: climbing::TallGradeSys) {
+
+    }
+    fn boulder_grade_dropdown(ctx: &eframe::egui::Context, grade: climbing::BoulderGradeSys) {
+
+    }
+}
